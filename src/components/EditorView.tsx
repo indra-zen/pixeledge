@@ -1,10 +1,10 @@
 import React, { useEffect, useRef, useState, useCallback } from 'react';
 import { WebGLFilterEngine } from '../lib/webgl';
 import { FilterSettings, CustomFilter } from '../types';
-import { Download, Save, Share2, ChevronLeft, Image as ImageIcon, SlidersHorizontal, Activity, X, Trash2 } from 'lucide-react';
+import { Download, Save, Share2, ChevronLeft, Image as ImageIcon, SlidersHorizontal, Activity, X, Trash2, BarChart2 } from 'lucide-react';
 import { db } from '../lib/db';
 import { calculateHistogram } from '../lib/imageUtils';
-import { HistogramPanel } from './HistogramPanel';
+import { HistogramPanel, HistogramData } from './HistogramPanel';
 
 interface EditorViewProps {
   imageData: ImageData;
@@ -27,7 +27,7 @@ const BUILT_IN_FILTERS: { name: string, settings: FilterSettings }[] = [
   { name: 'Dark & Moody', settings: { brightness: -0.2, contrast: 1.3, saturation: 0.8, hue: 0, sharpness: 0.2, grain: 0.1, temperature: -0.2, vignette: 0.8 } },
 ];
 
-type DrawerType = 'PRESETS' | 'ADJUST' | 'STATS' | null;
+type DrawerType = 'PRESETS' | 'ADJUST' | 'STATS' | 'HISTOGRAM' | null;
 
 const isSettingsEqual = (a: FilterSettings, b: FilterSettings) => {
   return Math.abs(a.brightness - b.brightness) < 0.001 &&
@@ -54,7 +54,7 @@ export function EditorView({ imageData, onBack }: EditorViewProps) {
   const [thumbnailUrl, setThumbnailUrl] = useState<string | null>(null);
   
   const [renderTime, setRenderTime] = useState(0);
-  const [histogram, setHistogram] = useState<number[]>(Array(32).fill(0));
+  const [histogram, setHistogram] = useState<HistogramData | null>(null);
 
   useEffect(() => {
     const timeout = setTimeout(() => {
@@ -244,22 +244,30 @@ export function EditorView({ imageData, onBack }: EditorViewProps) {
           <button onClick={() => setSaveModalOpen(true)} className="mt-4 w-full bg-black text-white py-3 font-bold hover:bg-zinc-800 transition-colors uppercase border-2 border-transparent hover:border-black active:translate-y-[2px] shrink-0">SIMPAN JADI FILTER BARU</button>
         </section>
 
-        {/* Desktop: Stats for Nerds */}
-        <section id={isDesktop ? "tour-stats" : undefined} className="hidden lg:flex lg:col-span-3 lg:row-span-2 bg-blue-400 border-[4px] border-black p-4 shadow-[8px_8px_0px_0px_rgba(0,0,0,1)] flex-col shrink-0">
-          <h2 className="font-black text-xl mb-4 uppercase">INFO RENDER</h2>
-          <div className="space-y-4 flex-1 flex flex-col justify-end">
-            <div className="bg-white border-2 border-black p-2 h-full flex flex-col">
-              <HistogramPanel data={histogram} />
-            </div>
-            <div className="text-xs space-y-1 font-bold bg-white/50 p-2 border-2 border-black">
-              <div className="flex justify-between"><span>WAKTU RENDER:</span><span>{renderTime.toFixed(2)}ms</span></div>
-              <div className="flex justify-between"><span>RESOLUSI:</span><span>{imageData.width}x{imageData.height}</span></div>
+        {/* Desktop: Stats */}
+        <section id={isDesktop ? "tour-stats" : undefined} className="hidden lg:flex lg:col-span-2 lg:row-span-2 bg-blue-400 border-[4px] border-black p-4 shadow-[8px_8px_0px_0px_rgba(0,0,0,1)] flex-col shrink-0 min-h-0">
+          <h2 className="font-black text-lg mb-4 uppercase">INFO</h2>
+          <div className="flex-1 flex flex-col justify-end">
+            <div className="text-[10px] space-y-1.5 font-bold bg-white/50 p-2 border-2 border-black">
+              <div className="flex justify-between border-b border-black/10 pb-1"><span>WAKTU RENDER:</span><span>{renderTime.toFixed(2)}ms</span></div>
+              <div className="flex justify-between border-b border-black/10 pb-1"><span>RESOLUSI:</span><span>{imageData.width}x{imageData.height}</span></div>
+              <div className="flex justify-between border-b border-black/10 pb-1"><span>RASIO:</span><span>{(imageData.width/imageData.height).toFixed(2)}:1</span></div>
+              <div className="flex justify-between border-b border-black/10 pb-1"><span>PIKSEL:</span><span>{(imageData.width * imageData.height).toLocaleString()}</span></div>
+              <div className="flex justify-between"><span>WARNA:</span><span>RGBA</span></div>
             </div>
           </div>
         </section>
 
+        {/* Desktop: Histogram */}
+        <section id={isDesktop ? "tour-histogram" : undefined} className="hidden lg:flex lg:col-span-2 lg:row-span-2 bg-purple-400 border-[4px] border-black p-4 shadow-[8px_8px_0px_0px_rgba(0,0,0,1)] flex-col shrink-0 min-h-0">
+          <h2 className="font-black text-lg mb-4 uppercase">GRAFIK</h2>
+          <div className="bg-[#1a1a1a] border-[3px] border-black p-0 h-full flex flex-col min-h-0">
+            <HistogramPanel data={histogram} />
+          </div>
+        </section>
+
         {/* Desktop: Built-in Filters */}
-        <section id={isDesktop ? "tour-presets" : undefined} className="hidden lg:flex lg:col-span-9 lg:row-span-2 bg-white border-[4px] border-black p-4 shadow-[8px_8px_0px_0px_rgba(0,0,0,1)] flex-col shrink-0">
+        <section id={isDesktop ? "tour-presets" : undefined} className="hidden lg:flex lg:col-span-8 lg:row-span-2 bg-white border-[4px] border-black p-4 shadow-[8px_8px_0px_0px_rgba(0,0,0,1)] flex-col shrink-0 min-h-0">
           <h3 className="font-bold text-sm mb-2 uppercase">FILTER</h3>
           <div className="flex gap-4 overflow-x-auto pb-2 flex-1 items-center no-scrollbar">
             {BUILT_IN_FILTERS.map((f, i) => {
@@ -381,14 +389,21 @@ export function EditorView({ imageData, onBack }: EditorViewProps) {
           )}
 
           {activeDrawer === 'STATS' && (
-            <div className="flex flex-col gap-4 max-w-xl mx-auto h-full justify-between">
-              <div className="flex-1 bg-white border-[3px] border-black p-2 shadow-[4px_4px_0px_0px_rgba(0,0,0,1)]">
-                <HistogramPanel data={histogram} />
-              </div>
+            <div className="flex flex-col gap-4 max-w-xl mx-auto h-full justify-start">
               <div className="text-[10px] sm:text-xs space-y-2 font-bold bg-blue-100 p-3 border-[3px] border-black shadow-[4px_4px_0px_0px_rgba(0,0,0,1)]">
                 <div className="flex justify-between border-b-2 border-black/20 pb-1"><span>WAKTU RENDER:</span><span>{renderTime.toFixed(2)}ms</span></div>
                 <div className="flex justify-between border-b-2 border-black/20 pb-1"><span>RESOLUSI:</span><span>{imageData.width}x{imageData.height}</span></div>
-                <div className="flex justify-between"><span>PIKSEL:</span><span>{(imageData.width * imageData.height).toLocaleString()}</span></div>
+                <div className="flex justify-between border-b-2 border-black/20 pb-1"><span>RASIO:</span><span>{(imageData.width/imageData.height).toFixed(2)}:1</span></div>
+                <div className="flex justify-between border-b-2 border-black/20 pb-1"><span>PIKSEL:</span><span>{(imageData.width * imageData.height).toLocaleString()}</span></div>
+                <div className="flex justify-between"><span>WARNA:</span><span>RGBA (8-bit)</span></div>
+              </div>
+            </div>
+          )}
+
+          {activeDrawer === 'HISTOGRAM' && (
+            <div className="flex flex-col gap-4 max-w-xl mx-auto h-full justify-between">
+              <div className="flex-1 bg-[#1a1a1a] border-[3px] border-black p-0 shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] flex flex-col min-h-[160px]">
+                <HistogramPanel data={histogram} />
               </div>
             </div>
           )}
@@ -405,6 +420,9 @@ export function EditorView({ imageData, onBack }: EditorViewProps) {
         </button>
         <button id={!isDesktop ? "tour-stats" : undefined} onClick={() => setActiveDrawer(activeDrawer === 'STATS' ? null : 'STATS')} className={`flex-1 border-[3px] border-black py-1 sm:py-2 font-black text-[10px] sm:text-xs flex flex-col items-center justify-center gap-1 shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] active:translate-y-[2px] active:translate-x-[2px] active:shadow-none transition-all ${activeDrawer === 'STATS' ? 'bg-blue-400 translate-y-[2px] translate-x-[2px] shadow-none' : 'bg-white hover:bg-gray-100'}`}>
           <Activity size={20} /> <span className="uppercase">Info</span>
+        </button>
+        <button id={!isDesktop ? "tour-histogram" : undefined} onClick={() => setActiveDrawer(activeDrawer === 'HISTOGRAM' ? null : 'HISTOGRAM')} className={`flex-1 border-[3px] border-black py-1 sm:py-2 font-black text-[10px] sm:text-xs flex flex-col items-center justify-center gap-1 shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] active:translate-y-[2px] active:translate-x-[2px] active:shadow-none transition-all ${activeDrawer === 'HISTOGRAM' ? 'bg-purple-400 translate-y-[2px] translate-x-[2px] shadow-none' : 'bg-white hover:bg-gray-100'}`}>
+          <BarChart2 size={20} /> <span className="uppercase">Grafik</span>
         </button>
       </footer>
 
