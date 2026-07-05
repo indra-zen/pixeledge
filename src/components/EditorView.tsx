@@ -259,7 +259,7 @@ export function EditorView({ imageData, onBack }: EditorViewProps) {
         </section>
 
         {/* Desktop: Histogram */}
-        <section id={isDesktop ? "tour-histogram" : undefined} className="hidden lg:flex lg:col-span-2 lg:row-span-2 bg-purple-400 border-[4px] border-black p-4 shadow-[8px_8px_0px_0px_rgba(0,0,0,1)] flex-col shrink-0 min-h-0">
+        <section id={isDesktop ? "tour-histogram" : undefined} className="hidden lg:flex lg:col-span-3 lg:row-span-2 bg-purple-400 border-[4px] border-black p-4 shadow-[8px_8px_0px_0px_rgba(0,0,0,1)] flex-col shrink-0 min-h-0">
           <h2 className="font-black text-lg mb-4 uppercase">GRAFIK</h2>
           <div className="bg-[#1a1a1a] border-[3px] border-black p-0 h-full flex flex-col min-h-0">
             <HistogramPanel data={histogram} />
@@ -267,7 +267,7 @@ export function EditorView({ imageData, onBack }: EditorViewProps) {
         </section>
 
         {/* Desktop: Built-in Filters */}
-        <section id={isDesktop ? "tour-presets" : undefined} className="hidden lg:flex lg:col-span-8 lg:row-span-2 bg-white border-[4px] border-black p-4 shadow-[8px_8px_0px_0px_rgba(0,0,0,1)] flex-col shrink-0 min-h-0">
+        <section id={isDesktop ? "tour-presets" : undefined} className="hidden lg:flex lg:col-span-7 lg:row-span-2 bg-white border-[4px] border-black p-4 shadow-[8px_8px_0px_0px_rgba(0,0,0,1)] flex-col shrink-0 min-h-0">
           <h3 className="font-bold text-sm mb-2 uppercase">FILTER</h3>
           <div className="flex gap-4 overflow-x-auto pb-2 flex-1 items-center no-scrollbar">
             {BUILT_IN_FILTERS.map((f, i) => {
