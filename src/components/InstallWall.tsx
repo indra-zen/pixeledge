@@ -8,6 +8,7 @@ export function InstallWall() {
   );
   const [isMobile, setIsMobile] = useState(window.innerWidth < 768);
   const [isIOS, setIsIOS] = useState(/iPad|iPhone|iPod/.test(navigator.userAgent) && !(window as any).MSStream);
+  const [isInstalled, setIsInstalled] = useState(false);
 
   useEffect(() => {
     const handleResize = () => setIsMobile(window.innerWidth < 768);
@@ -23,10 +24,16 @@ export function InstallWall() {
     };
     window.addEventListener('beforeinstallprompt', handleBeforeInstallPrompt);
 
+    const handleAppInstalled = () => {
+      setIsInstalled(true);
+    };
+    window.addEventListener('appinstalled', handleAppInstalled);
+
     return () => {
       window.removeEventListener('resize', handleResize);
       mql.removeEventListener('change', handleDisplayMode);
       window.removeEventListener('beforeinstallprompt', handleBeforeInstallPrompt);
+      window.removeEventListener('appinstalled', handleAppInstalled);
     };
   }, []);
 
@@ -58,7 +65,12 @@ export function InstallWall() {
           PixelEdge requires installation for full offline capabilities.
         </p>
 
-        {isIOS ? (
+        {isInstalled ? (
+          <div className="w-full space-y-4 bg-green-100 p-4 border-2 border-black font-bold text-xs uppercase">
+            <p className="text-center text-green-800 text-lg">App Installed!</p>
+            <p className="text-center">Please close this browser tab and open PixelEdge from your device home screen.</p>
+          </div>
+        ) : isIOS ? (
           <div className="w-full space-y-4 bg-zinc-100 p-4 border-2 border-black font-bold text-xs uppercase">
             <p className="text-center">How to install on iOS:</p>
             <div className="flex items-center gap-3">

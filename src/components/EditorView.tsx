@@ -141,7 +141,7 @@ export function EditorView({ imageData, onBack }: EditorViewProps) {
     <div className="bg-[#FFE600] w-full h-full flex flex-col font-mono text-black select-none relative overflow-hidden lg:p-6">
       
       {/* Top Header */}
-      <header className="flex justify-between items-center bg-white border-b-[4px] border-black p-3 shadow-[0_4px_0_0_rgba(0,0,0,1)] shrink-0 z-10 lg:mb-6 lg:border-[4px] lg:shadow-[6px_6px_0px_0px_rgba(0,0,0,1)]">
+      <header className="flex justify-between items-center bg-white border-b-[4px] border-black p-3 shadow-[0_4px_0_0_rgba(0,0,0,1)] shrink-0 z-40 relative lg:mb-6 lg:border-[4px] lg:shadow-[6px_6px_0px_0px_rgba(0,0,0,1)]">
         <button onClick={onBack} className="bg-black text-white px-2 py-1 font-black sm:text-xl flex items-center hover:bg-zinc-800 shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] hover:translate-x-[2px] hover:translate-y-[2px] hover:shadow-none transition-all">
            <ChevronLeft size={24} /> <span className="hidden sm:inline">BACK</span>
         </button>

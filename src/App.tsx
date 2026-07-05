@@ -1,12 +1,12 @@
-import React, { useState } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import { CameraView } from './components/CameraView';
 import { EditorView } from './components/EditorView';
 import { InteractiveTour } from './components/InteractiveTour';
 import { InstallWall } from './components/InstallWall';
-import { cvProcessor } from './lib/opencv';
 import { AppView, Draft } from './types';
 import { db } from './lib/db';
 import { Loader2, X, HelpCircle } from 'lucide-react';
+import CvWorker from './lib/cv.worker?worker';
 
 export default function App() {
   const [currentView, setCurrentView] = useState<AppView>('CAMERA');
@@ -14,6 +14,15 @@ export default function App() {
   const [showDrafts, setShowDrafts] = useState(false);
   const [showTutorial, setShowTutorial] = useState(false);
   const [drafts, setDrafts] = useState<Draft[]>([]);
+
+  const workerRef = useRef<Worker | null>(null);
+
+  useEffect(() => {
+    workerRef.current = new CvWorker();
+    return () => {
+      workerRef.current?.terminate();
+    };
+  }, []);
 
   const handleCapture = async (imageSource: HTMLImageElement | HTMLCanvasElement) => {
     setCurrentView('PROCESSING');
@@ -34,8 +43,27 @@ export default function App() {
       ctx.drawImage(imageSource, 0, 0, canvas.width, canvas.height);
       const inputImageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
 
-      // Remove alerts
-      const processed = await cvProcessor.processImage(inputImageData, 'denoise');
+      if (!workerRef.current) {
+        throw new Error("Worker not initialized");
+      }
+
+      const id = Date.now().toString();
+      
+      const processed = await new Promise<ImageData>((resolve, reject) => {
+        const handler = (e: MessageEvent) => {
+          if (e.data.id === id) {
+            workerRef.current?.removeEventListener('message', handler);
+            if (e.data.success) {
+              resolve(e.data.processed);
+            } else {
+              reject(new Error(e.data.error));
+            }
+          }
+        };
+        workerRef.current?.addEventListener('message', handler);
+        workerRef.current?.postMessage({ id, imageData: inputImageData, type: 'denoise' });
+      });
+
       setImageData(processed);
       setCurrentView('EDITOR');
     } catch (err) {
