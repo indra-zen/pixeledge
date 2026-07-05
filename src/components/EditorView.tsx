@@ -1,7 +1,7 @@
 import React, { useEffect, useRef, useState, useCallback } from 'react';
 import { WebGLFilterEngine } from '../lib/webgl';
 import { FilterSettings, CustomFilter } from '../types';
-import { Download, Save, Share2, ChevronLeft, Image as ImageIcon, SlidersHorizontal, Activity, X } from 'lucide-react';
+import { Download, Save, Share2, ChevronLeft, Image as ImageIcon, SlidersHorizontal, Activity, X, Trash2 } from 'lucide-react';
 import { db } from '../lib/db';
 import { calculateHistogram } from '../lib/imageUtils';
 import { HistogramPanel } from './HistogramPanel';
@@ -11,17 +11,20 @@ interface EditorViewProps {
   onBack: () => void;
 }
 
+
+const getFilterCSS = (s: FilterSettings) => { return `brightness(${(1 + s.brightness) * 100}%) contrast(${s.contrast * 100}%) saturate(${s.saturation * 100}%) hue-rotate(${s.hue * 360}deg)`; };
+
 const BUILT_IN_FILTERS: { name: string, settings: FilterSettings }[] = [
-  { name: 'Normal', settings: { brightness: 0, contrast: 1, saturation: 1, hue: 0, sharpness: 0, grain: 0 } },
-  { name: 'Vintage', settings: { brightness: 0.1, contrast: 0.8, saturation: 0.5, hue: 0.1, sharpness: 0.2, grain: 0 } },
-  { name: 'Cyberpunk', settings: { brightness: 0.2, contrast: 1.5, saturation: 1.8, hue: 0.8, sharpness: 0.5, grain: 0 } },
-  { name: 'Grayscale', settings: { brightness: 0, contrast: 1.2, saturation: 0, hue: 0, sharpness: 0, grain: 0 } },
-  { name: 'High Contrast', settings: { brightness: 0, contrast: 2.0, saturation: 1.2, hue: 0, sharpness: 0.3, grain: 0 } },
-  { name: 'Washed Out', settings: { brightness: 0.2, contrast: 0.6, saturation: 0.4, hue: 0, sharpness: 0, grain: 0 } },
-  { name: 'Neon', settings: { brightness: 0.1, contrast: 1.8, saturation: 2.5, hue: 0.5, sharpness: 0.8, grain: 0 } },
-  { name: 'Sepiaish', settings: { brightness: 0.05, contrast: 0.9, saturation: 0.6, hue: -0.1, sharpness: 0.1, grain: 0 } },
-  { name: 'Crisp', settings: { brightness: 0, contrast: 1.1, saturation: 1.1, hue: 0, sharpness: 1.5, grain: 0 } },
-  { name: 'Dark & Moody', settings: { brightness: -0.2, contrast: 1.3, saturation: 0.8, hue: 0, sharpness: 0.2, grain: 0 } },
+  { name: 'Normal', settings: { brightness: 0, contrast: 1, saturation: 1, hue: 0, sharpness: 0, grain: 0, temperature: 0, vignette: 0 } },
+  { name: 'Vintage', settings: { brightness: 0.1, contrast: 0.8, saturation: 0.5, hue: 0.1, sharpness: 0.2, grain: 0.15, temperature: 0.3, vignette: 0.5 } },
+  { name: 'Cyberpunk', settings: { brightness: 0.1, contrast: 1.5, saturation: 1.8, hue: 0.8, sharpness: 0.5, grain: 0.05, temperature: -0.2, vignette: 0.4 } },
+  { name: 'Grayscale', settings: { brightness: 0, contrast: 1.2, saturation: 0, hue: 0, sharpness: 0, grain: 0.05, temperature: 0, vignette: 0 } },
+  { name: 'Cinematic', settings: { brightness: -0.1, contrast: 1.3, saturation: 0.8, hue: 0, sharpness: 0.3, grain: 0.08, temperature: -0.1, vignette: 0.6 } },
+  { name: 'Washed Out', settings: { brightness: 0.2, contrast: 0.6, saturation: 0.4, hue: 0, sharpness: 0, grain: 0, temperature: 0, vignette: 0 } },
+  { name: 'Neon', settings: { brightness: 0.1, contrast: 1.8, saturation: 2.5, hue: 0.5, sharpness: 0.8, grain: 0, temperature: 0, vignette: 0 } },
+  { name: 'Sepiaish', settings: { brightness: 0.05, contrast: 0.9, saturation: 0.6, hue: -0.1, sharpness: 0.1, grain: 0.08, temperature: 0.5, vignette: 0.3 } },
+  { name: 'Crisp', settings: { brightness: 0, contrast: 1.1, saturation: 1.1, hue: 0, sharpness: 1.5, grain: 0, temperature: 0, vignette: 0 } },
+  { name: 'Dark & Moody', settings: { brightness: -0.2, contrast: 1.3, saturation: 0.8, hue: 0, sharpness: 0.2, grain: 0.1, temperature: -0.2, vignette: 0.8 } },
 ];
 
 type DrawerType = 'PRESETS' | 'ADJUST' | 'STATS' | null;
@@ -31,7 +34,10 @@ const isSettingsEqual = (a: FilterSettings, b: FilterSettings) => {
          Math.abs(a.contrast - b.contrast) < 0.001 &&
          Math.abs(a.saturation - b.saturation) < 0.001 &&
          Math.abs(a.hue - b.hue) < 0.001 &&
-         Math.abs(a.sharpness - b.sharpness) < 0.001;
+         Math.abs(a.sharpness - b.sharpness) < 0.001 &&
+         Math.abs((a.temperature || 0) - (b.temperature || 0)) < 0.001 &&
+         Math.abs((a.vignette || 0) - (b.vignette || 0)) < 0.001 &&
+         Math.abs((a.grain || 0) - (b.grain || 0)) < 0.001;
 };
 
 export function EditorView({ imageData, onBack }: EditorViewProps) {
@@ -45,9 +51,33 @@ export function EditorView({ imageData, onBack }: EditorViewProps) {
   const [presetName, setPresetName] = useState('');
   const [isDesktop, setIsDesktop] = useState(typeof window !== 'undefined' && window.innerWidth >= 1024);
   const [toastMessage, setToastMessage] = useState<string | null>(null);
+  const [thumbnailUrl, setThumbnailUrl] = useState<string | null>(null);
   
   const [renderTime, setRenderTime] = useState(0);
   const [histogram, setHistogram] = useState<number[]>(Array(32).fill(0));
+
+  useEffect(() => {
+    const timeout = setTimeout(() => {
+      const scale = Math.min(100 / imageData.width, 100 / imageData.height);
+      const w = Math.floor(imageData.width * scale) || 1;
+      const h = Math.floor(imageData.height * scale) || 1;
+      
+      const thumbCanvas2d = document.createElement('canvas');
+      thumbCanvas2d.width = w;
+      thumbCanvas2d.height = h;
+      const ctx = thumbCanvas2d.getContext('2d');
+      if (!ctx) return;
+      
+      const offCanvas = document.createElement('canvas');
+      offCanvas.width = imageData.width;
+      offCanvas.height = imageData.height;
+      offCanvas.getContext('2d')?.putImageData(imageData, 0, 0);
+      ctx.drawImage(offCanvas, 0, 0, w, h);
+      
+      setThumbnailUrl(thumbCanvas2d.toDataURL('image/jpeg', 0.6));
+    }, 100);
+    return () => clearTimeout(timeout);
+  }, [imageData]);
 
   useEffect(() => {
     const check = () => setIsDesktop(window.innerWidth >= 1024);
@@ -116,7 +146,16 @@ export function EditorView({ imageData, onBack }: EditorViewProps) {
       loadCustomFilters();
       setSaveModalOpen(false);
       setPresetName('');
+      setToastMessage('Filter tersimpan!');
+      setTimeout(() => setToastMessage(null), 3000);
     }
+  };
+
+  const handleDeleteCustomFilter = async (id: number) => {
+    await db.deleteCustomFilter(id);
+    loadCustomFilters();
+    setToastMessage('Filter dihapus!');
+    setTimeout(() => setToastMessage(null), 3000);
   };
 
   const handleDownload = (format: 'png' | 'jpeg' | 'webp') => {
@@ -197,7 +236,10 @@ export function EditorView({ imageData, onBack }: EditorViewProps) {
             <Slider label="KONTRAS" value={settings.contrast} defaultValue={1} min={0} max={3} step={0.01} onChange={(v) => handleSliderChange('contrast', v)} />
             <Slider label="SATURASI" value={settings.saturation} defaultValue={1} min={0} max={3} step={0.01} onChange={(v) => handleSliderChange('saturation', v)} />
             <Slider label="WARNA (HUE)" value={settings.hue} defaultValue={0} min={-1} max={1} step={0.01} onChange={(v) => handleSliderChange('hue', v)} />
+            <Slider label="SUHU" value={settings.temperature || 0} defaultValue={0} min={-1} max={1} step={0.01} onChange={(v) => handleSliderChange('temperature', v)} />
             <Slider label="KETAJAMAN" value={settings.sharpness} defaultValue={0} min={-1} max={5} step={0.1} onChange={(v) => handleSliderChange('sharpness', v)} />
+            <Slider label="VIGNETTE" value={settings.vignette || 0} defaultValue={0} min={0} max={1} step={0.01} onChange={(v) => handleSliderChange('vignette', v)} />
+            <Slider label="GRAIN" value={settings.grain || 0} defaultValue={0} min={0} max={1} step={0.01} onChange={(v) => handleSliderChange('grain', v)} />
           </div>
           <button onClick={() => setSaveModalOpen(true)} className="mt-4 w-full bg-black text-white py-3 font-bold hover:bg-zinc-800 transition-colors uppercase border-2 border-transparent hover:border-black active:translate-y-[2px] shrink-0">SIMPAN JADI FILTER BARU</button>
         </section>
@@ -226,26 +268,39 @@ export function EditorView({ imageData, onBack }: EditorViewProps) {
               <button 
                 key={i}
                 onClick={() => setSettings(f.settings)}
-                className={`flex-shrink-0 w-32 h-24 border-2 border-black p-2 flex flex-col justify-between hover:brightness-95 transition-all text-left group active:bg-zinc-300 ${isActive ? 'translate-x-[2px] translate-y-[2px] shadow-none outline outline-4 outline-offset-2 outline-black' : 'shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] hover:translate-x-[2px] hover:translate-y-[2px] hover:shadow-none'}`}
-                style={{ backgroundColor: `hsl(${i * 45}, 80%, 75%)` }}
+                className={`relative flex-shrink-0 w-32 h-24 border-[3px] border-black flex flex-col justify-end hover:brightness-95 transition-all text-left group active:bg-zinc-300 overflow-hidden ${isActive ? 'translate-x-[2px] translate-y-[2px] shadow-none outline outline-4 outline-offset-2 outline-black bg-zinc-300' : 'shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] hover:translate-x-[2px] hover:translate-y-[2px] hover:shadow-none bg-white'}`}
               >
-                <span className="text-xs font-black uppercase truncate w-full">
+                {thumbnailUrl && (
+                  <div className="absolute inset-0 z-0 bg-cover bg-center opacity-100" 
+                       style={{ backgroundImage: `url(${thumbnailUrl})`, filter: getFilterCSS(f.settings) }} />
+                )}
+                <span className="relative z-10 text-xs font-black uppercase truncate w-full px-2 bg-white/80 py-1 border-t-[3px] border-black">
                   {i < 9 ? `0${i+1}` : i+1} {f.name}
                 </span>
-                <div className="h-1 w-full bg-black"></div>
               </button>
             )})}
             {customFilters.map((f, i) => {
               const isActive = isSettingsEqual(settings, f.settings);
               return (
-              <button 
-                key={'custom_'+i}
-                onClick={() => setSettings(f.settings)}
-                className={`flex-shrink-0 w-32 h-24 bg-cyan-300 border-2 border-black border-dashed p-2 flex flex-col justify-between transition-all text-left group active:bg-cyan-400 ${isActive ? 'translate-x-[2px] translate-y-[2px] shadow-none outline outline-4 outline-offset-2 outline-black' : 'shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] hover:translate-x-[2px] hover:translate-y-[2px] hover:shadow-none'}`}
-              >
-                <span className="text-xs font-black uppercase truncate w-full">★ {f.name}</span>
-                <div className="h-1 w-full bg-black"></div>
-              </button>
+              <div key={'custom_desk_'+i} className="relative flex-shrink-0 w-32 h-24">
+                <button 
+                  onClick={() => setSettings(f.settings)}
+                  className={`w-full h-full border-[3px] border-black border-dashed flex flex-col justify-end transition-all text-left group overflow-hidden ${isActive ? 'translate-x-[2px] translate-y-[2px] shadow-none outline outline-4 outline-offset-2 outline-black bg-cyan-300' : 'shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] hover:translate-x-[2px] hover:translate-y-[2px] hover:shadow-none bg-cyan-100'}`}
+                >
+                  {thumbnailUrl && (
+                    <div className="absolute inset-0 z-0 bg-cover bg-center opacity-100" 
+                         style={{ backgroundImage: `url(${thumbnailUrl})`, filter: getFilterCSS(f.settings) }} />
+                  )}
+                  <span className="relative z-10 text-xs font-black uppercase truncate w-full px-2 bg-cyan-300/80 py-1 border-t-[3px] border-black pr-6">★ {f.name}</span>
+                </button>
+                <button 
+                  onClick={(e) => { e.stopPropagation(); handleDeleteCustomFilter(f.id!); }}
+                  className="absolute top-1 right-1 z-20 p-1 bg-red-500 text-white border-2 border-black hover:bg-red-600 transition-colors shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] hover:translate-y-[1px] hover:translate-x-[1px] hover:shadow-none"
+                  title="Hapus filter"
+                >
+                  <Trash2 size={12} />
+                </button>
+              </div>
             )})}
           </div>
         </section>
@@ -274,10 +329,13 @@ export function EditorView({ imageData, onBack }: EditorViewProps) {
                 <button 
                   key={i}
                   onClick={() => setSettings(f.settings)}
-                  className={`h-16 sm:h-20 border-[3px] border-black p-2 flex items-center justify-center hover:brightness-95 transition-all text-center group active:bg-zinc-300 ${isActive ? 'translate-x-[2px] translate-y-[2px] shadow-none outline outline-4 outline-offset-2 outline-black' : 'shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] hover:translate-x-[2px] hover:translate-y-[2px] hover:shadow-none'}`}
-                  style={{ backgroundColor: `hsl(${i * 45}, 80%, 75%)` }}
+                  className={`relative h-16 sm:h-20 border-[3px] border-black flex items-center justify-center hover:brightness-95 transition-all text-center group active:bg-zinc-300 overflow-hidden ${isActive ? 'translate-x-[2px] translate-y-[2px] shadow-none outline outline-4 outline-offset-2 outline-black bg-zinc-300' : 'shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] hover:translate-x-[2px] hover:translate-y-[2px] hover:shadow-none bg-white'}`}
                 >
-                  <span className="text-xs sm:text-sm font-black uppercase truncate w-full">
+                  {thumbnailUrl && (
+                    <div className="absolute inset-0 z-0 bg-cover bg-center opacity-100" 
+                         style={{ backgroundImage: `url(${thumbnailUrl})`, filter: getFilterCSS(f.settings) }} />
+                  )}
+                  <span className="relative z-10 text-xs sm:text-sm font-black uppercase truncate w-full px-2 bg-white/80 py-0.5 border-y-2 border-black">
                     {f.name}
                   </span>
                 </button>
@@ -285,13 +343,25 @@ export function EditorView({ imageData, onBack }: EditorViewProps) {
               {customFilters.map((f, i) => {
                 const isActive = isSettingsEqual(settings, f.settings);
                 return (
-                <button 
-                  key={'custom_'+i}
-                  onClick={() => setSettings(f.settings)}
-                  className={`h-16 sm:h-20 bg-cyan-300 border-[3px] border-black border-dashed p-2 flex items-center justify-center transition-all text-center group active:bg-cyan-400 ${isActive ? 'translate-x-[2px] translate-y-[2px] shadow-none outline outline-4 outline-offset-2 outline-black' : 'shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] hover:translate-x-[2px] hover:translate-y-[2px] hover:shadow-none'}`}
-                >
-                  <span className="text-xs sm:text-sm font-black uppercase truncate w-full">★ {f.name}</span>
-                </button>
+                <div key={'custom_'+i} className="relative h-16 sm:h-20">
+                  <button 
+                    onClick={() => setSettings(f.settings)}
+                    className={`w-full h-full border-[3px] border-black flex items-center justify-center transition-all text-center group overflow-hidden ${isActive ? 'translate-x-[2px] translate-y-[2px] shadow-none outline outline-4 outline-offset-2 outline-black bg-cyan-300' : 'shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] hover:translate-x-[2px] hover:translate-y-[2px] hover:shadow-none bg-cyan-100'}`}
+                  >
+                    {thumbnailUrl && (
+                      <div className="absolute inset-0 z-0 bg-cover bg-center opacity-100" 
+                           style={{ backgroundImage: `url(${thumbnailUrl})`, filter: getFilterCSS(f.settings) }} />
+                    )}
+                    <span className="relative z-10 text-xs sm:text-sm font-black uppercase truncate w-full px-2 bg-cyan-300/80 py-0.5 border-y-2 border-black pr-6">★ {f.name}</span>
+                  </button>
+                  <button 
+                    onClick={(e) => { e.stopPropagation(); handleDeleteCustomFilter(f.id!); }}
+                    className="absolute top-1 right-1 z-20 p-1 bg-red-500 text-white border-2 border-black hover:bg-red-600 transition-colors shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] hover:translate-y-[1px] hover:translate-x-[1px] hover:shadow-none"
+                    title="Hapus filter"
+                  >
+                    <Trash2 size={12} />
+                  </button>
+                </div>
               )})}
             </div>
           )}
@@ -302,7 +372,10 @@ export function EditorView({ imageData, onBack }: EditorViewProps) {
               <Slider label="KONTRAS" value={settings.contrast} defaultValue={1} min={0} max={3} step={0.01} onChange={(v) => handleSliderChange('contrast', v)} />
               <Slider label="SATURASI" value={settings.saturation} defaultValue={1} min={0} max={3} step={0.01} onChange={(v) => handleSliderChange('saturation', v)} />
               <Slider label="WARNA (HUE)" value={settings.hue} defaultValue={0} min={-1} max={1} step={0.01} onChange={(v) => handleSliderChange('hue', v)} />
+              <Slider label="SUHU" value={settings.temperature || 0} defaultValue={0} min={-1} max={1} step={0.01} onChange={(v) => handleSliderChange('temperature', v)} />
               <Slider label="KETAJAMAN" value={settings.sharpness} defaultValue={0} min={-1} max={5} step={0.1} onChange={(v) => handleSliderChange('sharpness', v)} />
+              <Slider label="VIGNETTE" value={settings.vignette || 0} defaultValue={0} min={0} max={1} step={0.01} onChange={(v) => handleSliderChange('vignette', v)} />
+              <Slider label="GRAIN" value={settings.grain || 0} defaultValue={0} min={0} max={1} step={0.01} onChange={(v) => handleSliderChange('grain', v)} />
               <button onClick={() => setSaveModalOpen(true)} className="mt-4 w-full bg-black text-white py-3 font-black shadow-[4px_4px_0px_0px_rgba(255,230,0,1)] hover:bg-zinc-800 transition-colors uppercase text-sm border-2 border-black hover:border-black active:translate-y-[2px] shrink-0">SIMPAN JADI FILTER BARU</button>
             </div>
           )}

@@ -44,6 +44,9 @@ export class WebGLFilterEngine {
       uniform float u_contrast;
       uniform float u_saturation;
       uniform float u_hue;
+      uniform float u_temperature;
+      uniform float u_vignette;
+      uniform float u_grain;
       
       // Convolution parameters
       uniform vec2 u_textureSize;
@@ -63,6 +66,10 @@ export class WebGLFilterEngine {
           vec4 K = vec4(1.0, 2.0 / 3.0, 1.0 / 3.0, 3.0);
           vec3 p = abs(fract(c.xxx + K.xyz) * 6.0 - K.www);
           return c.z * mix(K.xxx, clamp(p - K.xxx, 0.0, 1.0), c.y);
+      }
+      
+      float random(vec2 st) {
+          return fract(sin(dot(st.xy, vec2(12.9898,78.233))) * 43758.5453123);
       }
 
       void main() {
@@ -84,6 +91,10 @@ export class WebGLFilterEngine {
         // Base color could be out of bounds after convolution
         baseColor.rgb = clamp(baseColor.rgb, 0.0, 1.0);
 
+        // Temperature (yellow/blue shift)
+        baseColor.r = clamp(baseColor.r + u_temperature * 0.2, 0.0, 1.0);
+        baseColor.b = clamp(baseColor.b - u_temperature * 0.2, 0.0, 1.0);
+
         // Adjust Brightness & Contrast
         baseColor.rgb = (baseColor.rgb - 0.5) * u_contrast + 0.5 + u_brightness;
         
@@ -94,8 +105,18 @@ export class WebGLFilterEngine {
         if (hsv.x < 0.0) hsv.x += 1.0;
         hsv.y *= u_saturation;
         baseColor.rgb = hsv2rgb(hsv);
+        
+        // Vignette
+        vec2 centerCoords = v_texCoord - 0.5;
+        float dist = length(centerCoords);
+        float vignetteEffect = smoothstep(0.8, 0.2, dist * (1.0 + u_vignette));
+        baseColor.rgb = mix(baseColor.rgb, baseColor.rgb * vignetteEffect, u_vignette);
 
-        gl_FragColor = vec4(baseColor.rgb, 1.0);
+        // Grain
+        float noise = random(v_texCoord * u_textureSize) - 0.5;
+        baseColor.rgb += noise * u_grain;
+
+        gl_FragColor = vec4(clamp(baseColor.rgb, 0.0, 1.0), 1.0);
       }
     `;
 
@@ -207,6 +228,9 @@ export class WebGLFilterEngine {
     gl.uniform1f(gl.getUniformLocation(program, "u_contrast"), settings.contrast);
     gl.uniform1f(gl.getUniformLocation(program, "u_saturation"), settings.saturation);
     gl.uniform1f(gl.getUniformLocation(program, "u_hue"), settings.hue);
+    gl.uniform1f(gl.getUniformLocation(program, "u_temperature"), settings.temperature || 0);
+    gl.uniform1f(gl.getUniformLocation(program, "u_vignette"), settings.vignette || 0);
+    gl.uniform1f(gl.getUniformLocation(program, "u_grain"), settings.grain || 0);
     
     gl.uniform2f(gl.getUniformLocation(program, "u_textureSize"), gl.canvas.width, gl.canvas.height);
 

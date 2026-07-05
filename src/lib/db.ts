@@ -87,6 +87,18 @@ class DB {
       request.onerror = () => reject(request.error);
     });
   }
+
+  async deleteCustomFilter(id: number): Promise<void> {
+    await this.init();
+    return new Promise((resolve, reject) => {
+      const transaction = this.db!.transaction(['customFilters'], 'readwrite');
+      const store = transaction.objectStore('customFilters');
+      const request = store.delete(id);
+      
+      request.onsuccess = () => resolve();
+      request.onerror = () => reject(request.error);
+    });
+  }
 }
 
 export const db = new DB();

@@ -6,7 +6,9 @@ export interface FilterSettings {
   saturation: number;
   hue: number;
   sharpness: number; // For convolution matrix
-  grain: number;
+  temperature: number; // -1 to 1 (blue to yellow)
+  vignette: number; // 0 to 1
+  grain: number; // 0 to 1
 }
 
 export interface CustomFilter {
