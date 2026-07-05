@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { CameraView } from './components/CameraView';
 import { EditorView } from './components/EditorView';
 import { InteractiveTour } from './components/InteractiveTour';
+import { InstallWall } from './components/InstallWall';
 import { cvProcessor } from './lib/opencv';
 import { AppView, Draft } from './types';
 import { db } from './lib/db';
@@ -167,6 +168,9 @@ export default function App() {
           <HelpCircle size={28} className="text-black group-hover:scale-110 transition-transform" />
         </button>
       )}
+      
+      {/* Install Wall for Mobile */}
+      <InstallWall />
     </div>
   );
 }
