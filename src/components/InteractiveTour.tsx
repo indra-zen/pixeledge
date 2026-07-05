@@ -8,36 +8,36 @@ interface InteractiveTourProps {
 const TOUR_STEPS = [
   {
     target: '#tour-render-stream',
-    title: 'RENDER STREAM',
-    content: 'This is your live WebGPU canvas. Changes happen here in real-time at 60FPS.',
+    title: 'AREA GAMBAR',
+    content: 'Ini adalah kanvas WebGPU kamu. Perubahan akan terlihat langsung secara real-time (60 FPS).',
     placement: 'bottom',
     color: 'bg-pink-400'
   },
   {
     target: '#tour-pipeline',
-    title: 'CUSTOM PIPELINE',
-    content: 'Adjust Brightness, Contrast, Saturation, and run Convolution Matrix sharpening on the fly.',
+    title: 'ATUR MANUAL',
+    content: 'Atur Kecerahan, Kontras, Saturasi, dan ketajaman gambar sesuka hatimu.',
     placement: 'left',
     color: 'bg-white'
   },
   {
     target: '#tour-stats',
-    title: 'STATS FOR NERDS',
-    content: 'Monitor render times and view the live RGB histogram distribution of your image.',
+    title: 'INFO RENDER',
+    content: 'Pantau kecepatan render dan lihat histogram RGB fotomu secara real-time.',
     placement: 'top',
     color: 'bg-blue-400'
   },
   {
     target: '#tour-presets',
-    title: 'BUILT-IN PRESETS',
-    content: 'One-click presets that run purely as WebGL/WebGPU fragment shaders.',
+    title: 'FILTER BAWAAN',
+    content: 'Filter sekali klik yang dibuat menggunakan teknologi WebGL/WebGPU.',
     placement: 'top',
     color: 'bg-yellow-400'
   },
   {
     target: '#tour-actions',
-    title: 'SAVE & EXPORT',
-    content: 'Save custom presets to IndexedDB, stash drafts offline, or download the final output.',
+    title: 'SIMPAN & EKSPOR',
+    content: 'Simpan filter buatanmu, simpan foto jadi draf offline, atau unduh hasil editanmu.',
     placement: 'bottom',
     color: 'bg-green-400'
   }
@@ -185,7 +185,7 @@ export function InteractiveTour({ onClose }: InteractiveTourProps) {
                 }}
                 className="px-4 py-2 border-2 border-black bg-white hover:bg-gray-200 transition-colors shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] active:translate-y-[2px] active:translate-x-[2px] active:shadow-none font-bold uppercase flex items-center gap-1"
               >
-                {currentStep === TOUR_STEPS.length - 1 ? 'DONE' : 'NEXT'} <ChevronRight size={20} strokeWidth={3} />
+                {currentStep === TOUR_STEPS.length - 1 ? 'SELESAI' : 'LANJUT'} <ChevronRight size={20} strokeWidth={3} />
               </button>
             </div>
           </div>

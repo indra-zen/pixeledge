@@ -83,7 +83,7 @@ export function CameraView({ onCapture, onSelectDraft }: CameraViewProps) {
             className="bg-white border-2 border-black px-2 sm:px-4 py-2 font-bold shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] hover:translate-x-[2px] hover:translate-y-[2px] hover:shadow-none transition-all flex items-center gap-2"
           >
             <ImageIcon size={20} />
-            <span className="hidden md:inline">DRAFTS</span>
+            <span className="hidden md:inline">DRAF</span>
           </button>
           
           <button 
@@ -91,7 +91,7 @@ export function CameraView({ onCapture, onSelectDraft }: CameraViewProps) {
             className="bg-pink-400 border-2 border-black px-2 sm:px-4 py-2 font-bold shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] hover:translate-x-[2px] hover:translate-y-[2px] hover:shadow-none transition-all flex items-center gap-2"
           >
             <Upload size={20} />
-            <span className="hidden md:inline">UPLOAD</span>
+            <span className="hidden md:inline">UNGGAH</span>
           </button>
           <input 
             type="file" 
@@ -113,7 +113,7 @@ export function CameraView({ onCapture, onSelectDraft }: CameraViewProps) {
       
       <main className="flex-1 grid grid-cols-1 gap-4 sm:gap-6 min-h-0 relative">
         <section className="col-span-1 bg-black border-[4px] border-black relative shadow-[8px_8px_0px_0px_rgba(0,0,0,1)] overflow-hidden flex items-center justify-center group">
-          <div className="absolute top-4 left-4 z-10 bg-white border-2 border-black px-2 py-1 text-[10px] sm:text-xs font-bold uppercase">Camera</div>
+          <div className="absolute top-4 left-4 z-10 bg-white border-2 border-black px-2 py-1 text-[10px] sm:text-xs font-bold uppercase">Kamera</div>
           {isMobile ? (
             <div className="absolute inset-0 z-20 flex flex-col items-center justify-center bg-black p-6 text-center">
               <Camera size={64} className="text-cyan-400 mb-8" />
@@ -121,9 +121,9 @@ export function CameraView({ onCapture, onSelectDraft }: CameraViewProps) {
                 onClick={() => nativeCamRef.current?.click()}
                 className="bg-cyan-400 border-[4px] border-black px-8 py-4 font-black uppercase text-2xl shadow-[8px_8px_0px_0px_rgba(0,0,0,1)] hover:translate-x-[2px] hover:translate-y-[2px] hover:shadow-none active:bg-pink-400 transition-all text-black mb-4"
               >
-                OPEN CAMERA
+                BUKA KAMERA
               </button>
-              <p className="text-white/60 text-sm font-bold max-w-xs mt-4">Using native camera for better quality on mobile devices.</p>
+              <p className="text-white/60 text-sm font-bold max-w-xs mt-4">Memakai kamera bawaan HP untuk hasil yang lebih baik.</p>
             </div>
           ) : !stream && (
             <div className="absolute inset-0 z-20 flex flex-col items-center justify-center bg-black/80 p-6 text-center">
@@ -135,7 +135,7 @@ export function CameraView({ onCapture, onSelectDraft }: CameraViewProps) {
                     onClick={startCamera}
                     className="bg-white border-[4px] border-black px-6 py-3 font-black uppercase text-xl shadow-[6px_6px_0px_0px_rgba(0,0,0,1)] hover:translate-x-[2px] hover:translate-y-[2px] hover:shadow-none active:bg-pink-400 transition-all text-black"
                   >
-                    Allow Camera Access
+                    Izinkan Akses Kamera
                   </button>
                 </>
               ) : (
@@ -143,7 +143,7 @@ export function CameraView({ onCapture, onSelectDraft }: CameraViewProps) {
                   onClick={startCamera}
                   className="bg-cyan-400 border-[4px] border-black px-6 py-3 font-black uppercase text-xl shadow-[6px_6px_0px_0px_rgba(0,0,0,1)] hover:translate-x-[2px] hover:translate-y-[2px] hover:shadow-none active:bg-pink-400 transition-all text-black"
                 >
-                  Start Camera
+                  Nyalakan Kamera
                 </button>
               )}
             </div>
@@ -156,7 +156,7 @@ export function CameraView({ onCapture, onSelectDraft }: CameraViewProps) {
           />
           
           <div className="absolute bottom-4 right-4 text-green-400 font-mono text-[10px] sm:text-sm z-20 bg-black/50 px-2 py-1 hidden sm:block">
-            {facingMode.toUpperCase()} CAM ACTIVE
+            KAMERA {facingMode.toUpperCase()} AKTIF
           </div>
 
           {!isMobile && (

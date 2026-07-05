@@ -58,28 +58,28 @@ export function InstallWall() {
         </div>
         
         <h1 className="text-3xl font-black uppercase text-center tracking-tight">
-          INSTALL APP
+          PASANG APLIKASI
         </h1>
         
         <p className="text-center font-bold text-sm border-2 border-black p-4 bg-blue-100 shadow-[4px_4px_0px_0px_rgba(0,0,0,1)]">
-          PixelEdge requires installation for full offline capabilities.
+          PixelEdge perlu dipasang agar bisa dipakai offline sepenuhnya.
         </p>
 
         {isInstalled ? (
           <div className="w-full space-y-4 bg-green-100 p-4 border-2 border-black font-bold text-xs uppercase">
-            <p className="text-center text-green-800 text-lg">App Installed!</p>
-            <p className="text-center">Please close this browser tab and open PixelEdge from your device home screen.</p>
+            <p className="text-center text-green-800 text-lg">Aplikasi Terpasang!</p>
+            <p className="text-center">Silakan tutup tab browser ini dan buka PixelEdge dari layar utama HP kamu.</p>
           </div>
         ) : isIOS ? (
           <div className="w-full space-y-4 bg-zinc-100 p-4 border-2 border-black font-bold text-xs uppercase">
-            <p className="text-center">How to install on iOS:</p>
+            <p className="text-center">Cara pasang di iOS:</p>
             <div className="flex items-center gap-3">
               <div className="w-8 h-8 flex items-center justify-center bg-white border-2 border-black shrink-0"><Share size={16} /></div>
-              <span>1. Tap the Share button</span>
+              <span>1. Ketuk tombol Bagikan (Share)</span>
             </div>
             <div className="flex items-center gap-3">
               <div className="w-8 h-8 flex items-center justify-center bg-white border-2 border-black shrink-0"><PlusSquare size={16} /></div>
-              <span>2. Tap "Add to Home Screen"</span>
+              <span>2. Ketuk "Tambah ke Layar Utama"</span>
             </div>
           </div>
         ) : deferredPrompt ? (
@@ -87,18 +87,18 @@ export function InstallWall() {
             onClick={handleInstall}
             className="w-full py-4 px-6 border-4 border-black font-black uppercase text-lg transition-all shadow-[6px_6px_0px_0px_rgba(0,0,0,1)] bg-green-400 hover:bg-green-300 active:translate-y-1 active:translate-x-1 active:shadow-none"
           >
-            INSTALL NOW
+            PASANG SEKARANG
           </button>
         ) : (
           <div className="w-full space-y-4 bg-zinc-100 p-4 border-2 border-black font-bold text-xs uppercase">
-            <p className="text-center">Install from Browser menu:</p>
+            <p className="text-center">Pasang dari menu Browser:</p>
             <div className="flex items-center gap-3">
               <div className="w-8 h-8 flex items-center justify-center bg-white border-2 border-black shrink-0"><MoreVertical size={16} /></div>
-              <span>1. Open Browser Menu</span>
+              <span>1. Buka Menu Browser</span>
             </div>
             <div className="flex items-center gap-3">
               <div className="w-8 h-8 flex items-center justify-center bg-white border-2 border-black shrink-0"><Download size={16} /></div>
-              <span>2. Tap "Install App" or "Add to Home screen"</span>
+              <span>2. Ketuk "Instal Aplikasi" atau "Tambah ke Layar Utama"</span>
             </div>
           </div>
         )}

@@ -141,7 +141,17 @@ export default function App() {
   const openDraft = (blob: Blob) => {
     setShowDrafts(false);
     const img = new Image();
-    img.onload = () => handleCapture(img);
+    img.onload = () => {
+      const canvas = document.createElement('canvas');
+      canvas.width = img.width;
+      canvas.height = img.height;
+      const ctx = canvas.getContext('2d')!;
+      ctx.drawImage(img, 0, 0);
+      const imgData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+      setImageData(imgData);
+      setCurrentView('EDITOR');
+      window.history.pushState({ view: 'EDITOR', drafts: false }, '');
+    };
     img.src = URL.createObjectURL(blob);
   };
 
@@ -155,9 +165,9 @@ export default function App() {
         <div className="flex flex-col items-center justify-center h-full bg-pink-400 border-8 border-black font-black uppercase text-2xl tracking-widest gap-6 p-6">
           <Loader2 className="w-16 h-16 animate-spin drop-shadow-[4px_4px_0px_rgba(0,0,0,1)]" />
           <div className="bg-white px-8 py-4 border-[4px] border-black shadow-[8px_8px_0px_0px_rgba(0,0,0,1)] text-center animate-pulse">
-            APPLYING MAGIC...
+            SEDANG MEMPROSES...
           </div>
-          <div className="text-sm tracking-normal font-bold text-center">Enhancing your image...</div>
+          <div className="text-sm tracking-normal font-bold text-center">Memoles fotomu...</div>
         </div>
       )}
       
@@ -170,7 +180,7 @@ export default function App() {
         <div className="fixed inset-0 bg-black/80 z-50 flex items-center justify-center p-4 sm:p-8 backdrop-blur-sm">
           <div className="bg-green-400 w-full max-w-4xl h-[80vh] border-[4px] border-black shadow-[16px_16px_0px_0px_rgba(0,0,0,1)] flex flex-col font-mono">
             <div className="flex justify-between items-center p-4 sm:p-6 border-b-[4px] border-black bg-white shrink-0">
-              <h2 className="text-xl sm:text-3xl font-black uppercase tracking-wider">SAVED DRAFTS</h2>
+              <h2 className="text-xl sm:text-3xl font-black uppercase tracking-wider">DRAF TERSIMPAN</h2>
               <button 
                 onClick={() => window.history.back()}
                 className="p-2 border-[4px] border-black shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] hover:translate-x-[2px] hover:translate-y-[2px] hover:shadow-none transition-all active:bg-gray-200"
@@ -181,7 +191,7 @@ export default function App() {
             <div className="flex-1 overflow-y-auto p-4 sm:p-6 grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 sm:gap-6 bg-[radial-gradient(circle,_#000_1px,_transparent_1px)] [background-size:20px_20px]">
               {drafts.length === 0 ? (
                 <div className="col-span-full flex items-center justify-center font-bold uppercase p-8 bg-white border-[4px] border-black shadow-[8px_8px_0px_0px_rgba(0,0,0,1)] h-48">
-                  NO SAVED IMAGES YET.
+                  BELUM ADA FOTO TERSIMPAN.
                 </div>
               ) : (
                 drafts.map(draft => (

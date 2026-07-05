@@ -26,6 +26,14 @@ const BUILT_IN_FILTERS: { name: string, settings: FilterSettings }[] = [
 
 type DrawerType = 'PRESETS' | 'ADJUST' | 'STATS' | null;
 
+const isSettingsEqual = (a: FilterSettings, b: FilterSettings) => {
+  return Math.abs(a.brightness - b.brightness) < 0.001 &&
+         Math.abs(a.contrast - b.contrast) < 0.001 &&
+         Math.abs(a.saturation - b.saturation) < 0.001 &&
+         Math.abs(a.hue - b.hue) < 0.001 &&
+         Math.abs(a.sharpness - b.sharpness) < 0.001;
+};
+
 export function EditorView({ imageData, onBack }: EditorViewProps) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const engineRef = useRef<WebGLFilterEngine | null>(null);
@@ -96,7 +104,7 @@ export function EditorView({ imageData, onBack }: EditorViewProps) {
     canvasRef.current.toBlob(async (blob) => {
       if (blob) {
         await db.saveDraft(blob);
-        setToastMessage('Saved to drafts!');
+        setToastMessage('Tersimpan di draf!');
         setTimeout(() => setToastMessage(null), 3000);
       }
     });
@@ -129,8 +137,8 @@ export function EditorView({ imageData, onBack }: EditorViewProps) {
         try {
           await navigator.share({
             files: [file],
-            title: 'My Photo',
-            text: 'Check out this photo I made!',
+            title: 'Fotoku',
+            text: 'Lihat foto keren yang kubuat ini!',
           });
         } catch (err) {
           console.error('Error sharing', err);
@@ -145,23 +153,23 @@ export function EditorView({ imageData, onBack }: EditorViewProps) {
       {/* Top Header */}
       <header className="flex justify-between items-center bg-white border-b-[4px] border-black p-3 shadow-[0_4px_0_0_rgba(0,0,0,1)] shrink-0 z-40 relative lg:mb-6 lg:border-[4px] lg:shadow-[6px_6px_0px_0px_rgba(0,0,0,1)]">
         <button onClick={onBack} className="bg-black text-white px-2 py-1 font-black sm:text-xl flex items-center hover:bg-zinc-800 shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] hover:translate-x-[2px] hover:translate-y-[2px] hover:shadow-none transition-all">
-           <ChevronLeft size={24} /> <span className="hidden sm:inline">BACK</span>
+           <ChevronLeft size={24} /> <span className="hidden sm:inline">KEMBALI</span>
         </button>
         <div className="flex gap-2 h-full items-stretch" id="tour-actions">
           <div className="relative flex">
             <button onClick={() => setShowDownloadMenu(!showDownloadMenu)} className="bg-green-400 border-[3px] border-black px-2 sm:px-3 py-1 sm:py-2 font-bold shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] hover:translate-x-[2px] hover:translate-y-[2px] hover:shadow-none transition-all flex items-center justify-center gap-2">
-               <Download size={18} /> <span className="hidden sm:inline uppercase">Export</span>
+               <Download size={18} /> <span className="hidden sm:inline uppercase">Ekspor</span>
             </button>
             {showDownloadMenu && (
               <div className="absolute top-[calc(100%+8px)] right-0 w-40 sm:w-48 bg-white border-[4px] border-black shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] flex flex-col z-50">
-                <button onClick={() => handleDownload('png')} className="px-4 py-2 sm:py-3 font-black hover:bg-green-200 border-b-[4px] border-black text-left uppercase text-sm">Save PNG</button>
-                <button onClick={() => handleDownload('jpeg')} className="px-4 py-2 sm:py-3 font-black hover:bg-green-200 border-b-[4px] border-black text-left uppercase text-sm">Save JPG</button>
-                <button onClick={handleShare} className="px-4 py-2 sm:py-3 font-black hover:bg-pink-200 text-left uppercase text-sm flex items-center justify-between">Share <Share2 size={16}/></button>
+                <button onClick={() => handleDownload('png')} className="px-4 py-2 sm:py-3 font-black hover:bg-green-200 border-b-[4px] border-black text-left uppercase text-sm">Simpan PNG</button>
+                <button onClick={() => handleDownload('jpeg')} className="px-4 py-2 sm:py-3 font-black hover:bg-green-200 border-b-[4px] border-black text-left uppercase text-sm">Simpan JPG</button>
+                <button onClick={handleShare} className="px-4 py-2 sm:py-3 font-black hover:bg-pink-200 text-left uppercase text-sm flex items-center justify-between">Bagikan <Share2 size={16}/></button>
               </div>
             )}
           </div>
           <button onClick={handleSaveDraft} className="bg-yellow-400 border-[3px] border-black px-2 sm:px-3 py-1 sm:py-2 font-bold shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] hover:translate-x-[2px] hover:translate-y-[2px] hover:shadow-none transition-all flex items-center gap-2">
-            <Save size={18} /> <span className="hidden sm:inline uppercase">Save Draft</span>
+            <Save size={18} /> <span className="hidden sm:inline uppercase">Simpan Draf</span>
           </button>
         </div>
       </header>
@@ -183,40 +191,42 @@ export function EditorView({ imageData, onBack }: EditorViewProps) {
 
         {/* Desktop: Custom Pipeline */}
         <section id={isDesktop ? "tour-pipeline" : undefined} className="hidden lg:flex lg:col-span-4 lg:row-span-4 bg-white border-[4px] border-black p-4 shadow-[8px_8px_0px_0px_rgba(0,0,0,1)] flex-col shrink-0">
-          <h2 className="font-black text-xl mb-4 border-b-2 border-black pb-2 uppercase">Adjustments</h2>
+          <h2 className="font-black text-xl mb-4 border-b-2 border-black pb-2 uppercase">Pengaturan</h2>
           <div className="space-y-6 flex-1 overflow-y-auto pr-2 no-scrollbar">
-            <Slider label="BRIGHTNESS" value={settings.brightness} min={-1} max={1} step={0.01} onChange={(v) => handleSliderChange('brightness', v)} />
-            <Slider label="CONTRAST" value={settings.contrast} min={0} max={3} step={0.01} onChange={(v) => handleSliderChange('contrast', v)} />
-            <Slider label="SATURATION" value={settings.saturation} min={0} max={3} step={0.01} onChange={(v) => handleSliderChange('saturation', v)} />
-            <Slider label="HUE SHIFT" value={settings.hue} min={-1} max={1} step={0.01} onChange={(v) => handleSliderChange('hue', v)} />
-            <Slider label="SHARPNESS" value={settings.sharpness} min={-1} max={5} step={0.1} onChange={(v) => handleSliderChange('sharpness', v)} />
+            <Slider label="KECERAHAN" value={settings.brightness} defaultValue={0} min={-1} max={1} step={0.01} onChange={(v) => handleSliderChange('brightness', v)} />
+            <Slider label="KONTRAS" value={settings.contrast} defaultValue={1} min={0} max={3} step={0.01} onChange={(v) => handleSliderChange('contrast', v)} />
+            <Slider label="SATURASI" value={settings.saturation} defaultValue={1} min={0} max={3} step={0.01} onChange={(v) => handleSliderChange('saturation', v)} />
+            <Slider label="WARNA (HUE)" value={settings.hue} defaultValue={0} min={-1} max={1} step={0.01} onChange={(v) => handleSliderChange('hue', v)} />
+            <Slider label="KETAJAMAN" value={settings.sharpness} defaultValue={0} min={-1} max={5} step={0.1} onChange={(v) => handleSliderChange('sharpness', v)} />
           </div>
-          <button onClick={() => setSaveModalOpen(true)} className="mt-4 w-full bg-black text-white py-3 font-bold hover:bg-zinc-800 transition-colors uppercase border-2 border-transparent hover:border-black active:translate-y-[2px] shrink-0">SAVE AS NEW FILTER</button>
+          <button onClick={() => setSaveModalOpen(true)} className="mt-4 w-full bg-black text-white py-3 font-bold hover:bg-zinc-800 transition-colors uppercase border-2 border-transparent hover:border-black active:translate-y-[2px] shrink-0">SIMPAN JADI FILTER BARU</button>
         </section>
 
         {/* Desktop: Stats for Nerds */}
         <section id={isDesktop ? "tour-stats" : undefined} className="hidden lg:flex lg:col-span-3 lg:row-span-2 bg-blue-400 border-[4px] border-black p-4 shadow-[8px_8px_0px_0px_rgba(0,0,0,1)] flex-col shrink-0">
-          <h2 className="font-black text-xl mb-4 uppercase">STATS FOR NERDS</h2>
+          <h2 className="font-black text-xl mb-4 uppercase">INFO RENDER</h2>
           <div className="space-y-4 flex-1 flex flex-col justify-end">
             <div className="bg-white border-2 border-black p-2 h-full flex flex-col">
               <HistogramPanel data={histogram} />
             </div>
             <div className="text-xs space-y-1 font-bold bg-white/50 p-2 border-2 border-black">
-              <div className="flex justify-between"><span>RENDER TIME:</span><span>{renderTime.toFixed(2)}ms</span></div>
-              <div className="flex justify-between"><span>RESOLUTION:</span><span>{imageData.width}x{imageData.height}</span></div>
+              <div className="flex justify-between"><span>WAKTU RENDER:</span><span>{renderTime.toFixed(2)}ms</span></div>
+              <div className="flex justify-between"><span>RESOLUSI:</span><span>{imageData.width}x{imageData.height}</span></div>
             </div>
           </div>
         </section>
 
         {/* Desktop: Built-in Filters */}
         <section id={isDesktop ? "tour-presets" : undefined} className="hidden lg:flex lg:col-span-9 lg:row-span-2 bg-white border-[4px] border-black p-4 shadow-[8px_8px_0px_0px_rgba(0,0,0,1)] flex-col shrink-0">
-          <h3 className="font-bold text-sm mb-2 uppercase">FILTERS</h3>
+          <h3 className="font-bold text-sm mb-2 uppercase">FILTER</h3>
           <div className="flex gap-4 overflow-x-auto pb-2 flex-1 items-center no-scrollbar">
-            {BUILT_IN_FILTERS.map((f, i) => (
+            {BUILT_IN_FILTERS.map((f, i) => {
+              const isActive = isSettingsEqual(settings, f.settings);
+              return (
               <button 
                 key={i}
                 onClick={() => setSettings(f.settings)}
-                className="flex-shrink-0 w-32 h-24 border-2 border-black p-2 flex flex-col justify-between hover:brightness-95 transition-all shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] hover:translate-x-[2px] hover:translate-y-[2px] hover:shadow-none text-left group active:bg-zinc-300"
+                className={`flex-shrink-0 w-32 h-24 border-2 border-black p-2 flex flex-col justify-between hover:brightness-95 transition-all text-left group active:bg-zinc-300 ${isActive ? 'translate-x-[2px] translate-y-[2px] shadow-none outline outline-4 outline-offset-2 outline-black' : 'shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] hover:translate-x-[2px] hover:translate-y-[2px] hover:shadow-none'}`}
                 style={{ backgroundColor: `hsl(${i * 45}, 80%, 75%)` }}
               >
                 <span className="text-xs font-black uppercase truncate w-full">
@@ -224,17 +234,19 @@ export function EditorView({ imageData, onBack }: EditorViewProps) {
                 </span>
                 <div className="h-1 w-full bg-black"></div>
               </button>
-            ))}
-            {customFilters.map((f, i) => (
+            )})}
+            {customFilters.map((f, i) => {
+              const isActive = isSettingsEqual(settings, f.settings);
+              return (
               <button 
                 key={'custom_'+i}
                 onClick={() => setSettings(f.settings)}
-                className="flex-shrink-0 w-32 h-24 bg-cyan-300 border-2 border-black border-dashed p-2 flex flex-col justify-between transition-all shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] hover:translate-x-[2px] hover:translate-y-[2px] hover:shadow-none text-left group active:bg-cyan-400"
+                className={`flex-shrink-0 w-32 h-24 bg-cyan-300 border-2 border-black border-dashed p-2 flex flex-col justify-between transition-all text-left group active:bg-cyan-400 ${isActive ? 'translate-x-[2px] translate-y-[2px] shadow-none outline outline-4 outline-offset-2 outline-black' : 'shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] hover:translate-x-[2px] hover:translate-y-[2px] hover:shadow-none'}`}
               >
                 <span className="text-xs font-black uppercase truncate w-full">★ {f.name}</span>
                 <div className="h-1 w-full bg-black"></div>
               </button>
-            ))}
+            )})}
           </div>
         </section>
 
@@ -248,7 +260,7 @@ export function EditorView({ imageData, onBack }: EditorViewProps) {
       >
         <div className="flex justify-between items-center p-2 sm:p-3 border-b-[4px] border-black bg-white">
           <h3 className="font-black uppercase text-sm sm:text-base ml-2">
-            {activeDrawer === 'PRESETS' ? 'Filters' : activeDrawer === 'ADJUST' ? 'Adjustments' : 'Stats for Nerds'}
+            {activeDrawer === 'PRESETS' ? 'Filter' : activeDrawer === 'ADJUST' ? 'Atur' : 'Info Render'}
           </h3>
           <button onClick={() => setActiveDrawer(null)} className="p-1 hover:bg-gray-200 border-2 border-transparent hover:border-black transition-colors"><X size={20}/></button>
         </div>
@@ -256,38 +268,42 @@ export function EditorView({ imageData, onBack }: EditorViewProps) {
         <div className="flex-1 overflow-y-auto p-4 bg-gray-50">
           {activeDrawer === 'PRESETS' && (
             <div className="grid grid-cols-2 sm:grid-cols-3 gap-3 pb-4">
-              {BUILT_IN_FILTERS.map((f, i) => (
+              {BUILT_IN_FILTERS.map((f, i) => {
+                const isActive = isSettingsEqual(settings, f.settings);
+                return (
                 <button 
                   key={i}
                   onClick={() => setSettings(f.settings)}
-                  className="h-16 sm:h-20 border-[3px] border-black p-2 flex items-center justify-center hover:brightness-95 transition-all shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] hover:translate-x-[2px] hover:translate-y-[2px] hover:shadow-none text-center group active:bg-zinc-300"
+                  className={`h-16 sm:h-20 border-[3px] border-black p-2 flex items-center justify-center hover:brightness-95 transition-all text-center group active:bg-zinc-300 ${isActive ? 'translate-x-[2px] translate-y-[2px] shadow-none outline outline-4 outline-offset-2 outline-black' : 'shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] hover:translate-x-[2px] hover:translate-y-[2px] hover:shadow-none'}`}
                   style={{ backgroundColor: `hsl(${i * 45}, 80%, 75%)` }}
                 >
                   <span className="text-xs sm:text-sm font-black uppercase truncate w-full">
                     {f.name}
                   </span>
                 </button>
-              ))}
-              {customFilters.map((f, i) => (
+              )})}
+              {customFilters.map((f, i) => {
+                const isActive = isSettingsEqual(settings, f.settings);
+                return (
                 <button 
                   key={'custom_'+i}
                   onClick={() => setSettings(f.settings)}
-                  className="h-16 sm:h-20 bg-cyan-300 border-[3px] border-black border-dashed p-2 flex items-center justify-center transition-all shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] hover:translate-x-[2px] hover:translate-y-[2px] hover:shadow-none text-center group active:bg-cyan-400"
+                  className={`h-16 sm:h-20 bg-cyan-300 border-[3px] border-black border-dashed p-2 flex items-center justify-center transition-all text-center group active:bg-cyan-400 ${isActive ? 'translate-x-[2px] translate-y-[2px] shadow-none outline outline-4 outline-offset-2 outline-black' : 'shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] hover:translate-x-[2px] hover:translate-y-[2px] hover:shadow-none'}`}
                 >
                   <span className="text-xs sm:text-sm font-black uppercase truncate w-full">★ {f.name}</span>
                 </button>
-              ))}
+              )})}
             </div>
           )}
 
           {activeDrawer === 'ADJUST' && (
             <div className="flex flex-col gap-5 pb-4 max-w-xl mx-auto">
-              <Slider label="BRIGHTNESS" value={settings.brightness} min={-1} max={1} step={0.01} onChange={(v) => handleSliderChange('brightness', v)} />
-              <Slider label="CONTRAST" value={settings.contrast} min={0} max={3} step={0.01} onChange={(v) => handleSliderChange('contrast', v)} />
-              <Slider label="SATURATION" value={settings.saturation} min={0} max={3} step={0.01} onChange={(v) => handleSliderChange('saturation', v)} />
-              <Slider label="HUE SHIFT" value={settings.hue} min={-1} max={1} step={0.01} onChange={(v) => handleSliderChange('hue', v)} />
-              <Slider label="SHARPNESS" value={settings.sharpness} min={-1} max={5} step={0.1} onChange={(v) => handleSliderChange('sharpness', v)} />
-              <button onClick={() => setSaveModalOpen(true)} className="mt-4 w-full bg-black text-white py-3 font-black shadow-[4px_4px_0px_0px_rgba(255,230,0,1)] hover:bg-zinc-800 transition-colors uppercase text-sm border-2 border-black hover:border-black active:translate-y-[2px] shrink-0">SAVE AS NEW FILTER</button>
+              <Slider label="KECERAHAN" value={settings.brightness} defaultValue={0} min={-1} max={1} step={0.01} onChange={(v) => handleSliderChange('brightness', v)} />
+              <Slider label="KONTRAS" value={settings.contrast} defaultValue={1} min={0} max={3} step={0.01} onChange={(v) => handleSliderChange('contrast', v)} />
+              <Slider label="SATURASI" value={settings.saturation} defaultValue={1} min={0} max={3} step={0.01} onChange={(v) => handleSliderChange('saturation', v)} />
+              <Slider label="WARNA (HUE)" value={settings.hue} defaultValue={0} min={-1} max={1} step={0.01} onChange={(v) => handleSliderChange('hue', v)} />
+              <Slider label="KETAJAMAN" value={settings.sharpness} defaultValue={0} min={-1} max={5} step={0.1} onChange={(v) => handleSliderChange('sharpness', v)} />
+              <button onClick={() => setSaveModalOpen(true)} className="mt-4 w-full bg-black text-white py-3 font-black shadow-[4px_4px_0px_0px_rgba(255,230,0,1)] hover:bg-zinc-800 transition-colors uppercase text-sm border-2 border-black hover:border-black active:translate-y-[2px] shrink-0">SIMPAN JADI FILTER BARU</button>
             </div>
           )}
 
@@ -297,9 +313,9 @@ export function EditorView({ imageData, onBack }: EditorViewProps) {
                 <HistogramPanel data={histogram} />
               </div>
               <div className="text-[10px] sm:text-xs space-y-2 font-bold bg-blue-100 p-3 border-[3px] border-black shadow-[4px_4px_0px_0px_rgba(0,0,0,1)]">
-                <div className="flex justify-between border-b-2 border-black/20 pb-1"><span>RENDER TIME:</span><span>{renderTime.toFixed(2)}ms</span></div>
-                <div className="flex justify-between border-b-2 border-black/20 pb-1"><span>RESOLUTION:</span><span>{imageData.width}x{imageData.height}</span></div>
-                <div className="flex justify-between"><span>PIXELS:</span><span>{(imageData.width * imageData.height).toLocaleString()}</span></div>
+                <div className="flex justify-between border-b-2 border-black/20 pb-1"><span>WAKTU RENDER:</span><span>{renderTime.toFixed(2)}ms</span></div>
+                <div className="flex justify-between border-b-2 border-black/20 pb-1"><span>RESOLUSI:</span><span>{imageData.width}x{imageData.height}</span></div>
+                <div className="flex justify-between"><span>PIKSEL:</span><span>{(imageData.width * imageData.height).toLocaleString()}</span></div>
               </div>
             </div>
           )}
@@ -309,13 +325,13 @@ export function EditorView({ imageData, onBack }: EditorViewProps) {
       {/* Mobile: Bottom Action Bar */}
       <footer className="lg:hidden absolute bottom-0 w-full bg-white border-t-[4px] border-black p-2 sm:p-3 flex gap-2 shrink-0 z-30 shadow-[0_-4px_0_0_rgba(0,0,0,1)]">
         <button id={!isDesktop ? "tour-presets" : undefined} onClick={() => setActiveDrawer(activeDrawer === 'PRESETS' ? null : 'PRESETS')} className={`flex-1 border-[3px] border-black py-1 sm:py-2 font-black text-[10px] sm:text-xs flex flex-col items-center justify-center gap-1 shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] active:translate-y-[2px] active:translate-x-[2px] active:shadow-none transition-all ${activeDrawer === 'PRESETS' ? 'bg-cyan-400 translate-y-[2px] translate-x-[2px] shadow-none' : 'bg-white hover:bg-gray-100'}`}>
-          <ImageIcon size={20} /> <span className="uppercase">Filters</span>
+          <ImageIcon size={20} /> <span className="uppercase">Filter</span>
         </button>
         <button id={!isDesktop ? "tour-pipeline" : undefined} onClick={() => setActiveDrawer(activeDrawer === 'ADJUST' ? null : 'ADJUST')} className={`flex-1 border-[3px] border-black py-1 sm:py-2 font-black text-[10px] sm:text-xs flex flex-col items-center justify-center gap-1 shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] active:translate-y-[2px] active:translate-x-[2px] active:shadow-none transition-all ${activeDrawer === 'ADJUST' ? 'bg-pink-400 translate-y-[2px] translate-x-[2px] shadow-none' : 'bg-white hover:bg-gray-100'}`}>
-          <SlidersHorizontal size={20} /> <span className="uppercase">Adjust</span>
+          <SlidersHorizontal size={20} /> <span className="uppercase">Atur</span>
         </button>
         <button id={!isDesktop ? "tour-stats" : undefined} onClick={() => setActiveDrawer(activeDrawer === 'STATS' ? null : 'STATS')} className={`flex-1 border-[3px] border-black py-1 sm:py-2 font-black text-[10px] sm:text-xs flex flex-col items-center justify-center gap-1 shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] active:translate-y-[2px] active:translate-x-[2px] active:shadow-none transition-all ${activeDrawer === 'STATS' ? 'bg-blue-400 translate-y-[2px] translate-x-[2px] shadow-none' : 'bg-white hover:bg-gray-100'}`}>
-          <Activity size={20} /> <span className="uppercase">Stats</span>
+          <Activity size={20} /> <span className="uppercase">Info</span>
         </button>
       </footer>
 
@@ -323,12 +339,12 @@ export function EditorView({ imageData, onBack }: EditorViewProps) {
       {saveModalOpen && (
         <div className="fixed inset-0 bg-black/80 z-[100] flex items-center justify-center p-4 backdrop-blur-sm">
           <div className="bg-white w-full max-w-sm border-[4px] border-black shadow-[16px_16px_0px_0px_rgba(0,0,0,1)] flex flex-col font-mono p-6">
-            <h3 className="font-black text-xl mb-4 uppercase">NAME YOUR FILTER</h3>
+            <h3 className="font-black text-xl mb-4 uppercase">NAMA FILTERMU</h3>
             <input 
               type="text" 
               value={presetName}
               onChange={(e) => setPresetName(e.target.value)}
-              placeholder="e.g. My Cool Filter"
+              placeholder="Cth: Filter Kerenku"
               className="w-full border-[3px] border-black p-3 mb-4 font-bold outline-none focus:ring-2 focus:ring-black shadow-[4px_4px_0px_0px_rgba(0,0,0,1)]"
               autoFocus
             />
@@ -337,13 +353,13 @@ export function EditorView({ imageData, onBack }: EditorViewProps) {
                 onClick={() => setSaveModalOpen(false)}
                 className="flex-1 bg-gray-200 border-[3px] border-black py-3 font-black shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] hover:translate-x-[2px] hover:translate-y-[2px] hover:shadow-none active:bg-gray-300 transition-all uppercase"
               >
-                CANCEL
+                BATAL
               </button>
               <button 
                 onClick={handleSaveCustomFilter}
                 className="flex-1 bg-green-400 border-[3px] border-black py-3 font-black shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] hover:translate-x-[2px] hover:translate-y-[2px] hover:shadow-none active:bg-green-500 transition-all uppercase"
               >
-                SAVE
+                SIMPAN
               </button>
             </div>
           </div>
@@ -362,11 +378,24 @@ export function EditorView({ imageData, onBack }: EditorViewProps) {
   );
 }
 
-function Slider({ label, value, min, max, step, onChange }: { label: string, value: number, min: number, max: number, step: number, onChange: (v: number) => void }) {
+function Slider({ label, value, min, max, step, defaultValue, onChange }: { label: string, value: number, min: number, max: number, step: number, defaultValue: number, onChange: (v: number) => void }) {
+  const isModified = Math.abs(value - defaultValue) > 0.001;
+
   return (
     <div className="flex flex-col gap-2">
-      <div className="flex justify-between font-black text-xs sm:text-sm uppercase">
-        <span>{label}</span>
+      <div className="flex justify-between items-center font-black text-xs sm:text-sm uppercase">
+        <span className="flex items-center gap-2">
+          {label}
+          {isModified && (
+            <button 
+              onClick={() => onChange(defaultValue)}
+              className="text-[10px] bg-red-500 text-white px-1.5 py-0.5 hover:bg-red-600 transition-colors border border-black shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] active:translate-y-[1px] active:translate-x-[1px] active:shadow-none"
+              title="Reset to default"
+            >
+              RESET
+            </button>
+          )}
+        </span>
         <span className="bg-black text-white px-2 py-0.5">{value.toFixed(2)}</span>
       </div>
       <input 
@@ -375,6 +404,7 @@ function Slider({ label, value, min, max, step, onChange }: { label: string, val
         max={max} 
         step={step} 
         value={value} 
+        onDoubleClick={() => onChange(defaultValue)}
         onChange={(e) => onChange(parseFloat(e.target.value))}
         className="w-full h-6 bg-white border-[3px] border-black appearance-none cursor-pointer accent-black"
         style={{
