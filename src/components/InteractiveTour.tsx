@@ -22,10 +22,17 @@ const TOUR_STEPS = [
   },
   {
     target: '#tour-stats',
-    title: 'INFO RENDER',
-    content: 'Pantau kecepatan render dan lihat histogram RGB fotomu secara real-time.',
+    title: 'INFO GAMBAR',
+    content: 'Pantau kecepatan render, resolusi, dan informasi lainnya tentang fotomu.',
     placement: 'top',
     color: 'bg-blue-400'
+  },
+  {
+    target: '#tour-histogram',
+    title: 'GRAFIK HISTOGRAM',
+    content: 'Lihat histogram RGB dan Luma fotomu secara real-time untuk mengatur eksposur.',
+    placement: 'top',
+    color: 'bg-purple-400'
   },
   {
     target: '#tour-presets',

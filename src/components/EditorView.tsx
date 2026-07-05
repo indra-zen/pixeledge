@@ -56,9 +56,13 @@ export function EditorView({ imageData, onBack }: EditorViewProps) {
   const [renderTime, setRenderTime] = useState(0);
   const [histogram, setHistogram] = useState<HistogramData | null>(null);
 
+  const isPortrait = imageData.height > imageData.width;
+  const desktopThumbClass = isPortrait ? "w-24 h-32" : "w-32 h-24";
+  const mobileThumbClass = isPortrait ? "aspect-[3/4]" : "aspect-[4/3]";
+
   useEffect(() => {
     const timeout = setTimeout(() => {
-      const scale = Math.min(100 / imageData.width, 100 / imageData.height);
+      const scale = Math.min(400 / imageData.width, 400 / imageData.height);
       const w = Math.floor(imageData.width * scale) || 1;
       const h = Math.floor(imageData.height * scale) || 1;
       
@@ -74,7 +78,7 @@ export function EditorView({ imageData, onBack }: EditorViewProps) {
       offCanvas.getContext('2d')?.putImageData(imageData, 0, 0);
       ctx.drawImage(offCanvas, 0, 0, w, h);
       
-      setThumbnailUrl(thumbCanvas2d.toDataURL('image/jpeg', 0.6));
+      setThumbnailUrl(thumbCanvas2d.toDataURL('image/jpeg', 0.8));
     }, 100);
     return () => clearTimeout(timeout);
   }, [imageData]);
@@ -276,7 +280,7 @@ export function EditorView({ imageData, onBack }: EditorViewProps) {
               <button 
                 key={i}
                 onClick={() => setSettings(f.settings)}
-                className={`relative flex-shrink-0 w-32 h-24 border-[3px] border-black flex flex-col justify-end hover:brightness-95 transition-all text-left group active:bg-zinc-300 overflow-hidden ${isActive ? 'translate-x-[2px] translate-y-[2px] shadow-none outline outline-4 outline-offset-2 outline-black bg-zinc-300' : 'shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] hover:translate-x-[2px] hover:translate-y-[2px] hover:shadow-none bg-white'}`}
+                className={`relative flex-shrink-0 ${desktopThumbClass} border-[3px] border-black flex flex-col justify-end hover:brightness-95 transition-all text-left group active:bg-zinc-300 overflow-hidden ${isActive ? 'translate-x-[2px] translate-y-[2px] shadow-none outline outline-4 outline-offset-2 outline-black bg-zinc-300' : 'shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] hover:translate-x-[2px] hover:translate-y-[2px] hover:shadow-none bg-white'}`}
               >
                 {thumbnailUrl && (
                   <div className="absolute inset-0 z-0 bg-cover bg-center opacity-100" 
@@ -290,7 +294,7 @@ export function EditorView({ imageData, onBack }: EditorViewProps) {
             {customFilters.map((f, i) => {
               const isActive = isSettingsEqual(settings, f.settings);
               return (
-              <div key={'custom_desk_'+i} className="relative flex-shrink-0 w-32 h-24">
+              <div key={'custom_desk_'+i} className={`relative flex-shrink-0 ${desktopThumbClass}`}>
                 <button 
                   onClick={() => setSettings(f.settings)}
                   className={`w-full h-full border-[3px] border-black border-dashed flex flex-col justify-end transition-all text-left group overflow-hidden ${isActive ? 'translate-x-[2px] translate-y-[2px] shadow-none outline outline-4 outline-offset-2 outline-black bg-cyan-300' : 'shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] hover:translate-x-[2px] hover:translate-y-[2px] hover:shadow-none bg-cyan-100'}`}
@@ -337,7 +341,7 @@ export function EditorView({ imageData, onBack }: EditorViewProps) {
                 <button 
                   key={i}
                   onClick={() => setSettings(f.settings)}
-                  className={`relative h-16 sm:h-20 border-[3px] border-black flex items-center justify-center hover:brightness-95 transition-all text-center group active:bg-zinc-300 overflow-hidden ${isActive ? 'translate-x-[2px] translate-y-[2px] shadow-none outline outline-4 outline-offset-2 outline-black bg-zinc-300' : 'shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] hover:translate-x-[2px] hover:translate-y-[2px] hover:shadow-none bg-white'}`}
+                  className={`relative ${mobileThumbClass} border-[3px] border-black flex items-center justify-center hover:brightness-95 transition-all text-center group active:bg-zinc-300 overflow-hidden ${isActive ? 'translate-x-[2px] translate-y-[2px] shadow-none outline outline-4 outline-offset-2 outline-black bg-zinc-300' : 'shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] hover:translate-x-[2px] hover:translate-y-[2px] hover:shadow-none bg-white'}`}
                 >
                   {thumbnailUrl && (
                     <div className="absolute inset-0 z-0 bg-cover bg-center opacity-100" 
@@ -351,7 +355,7 @@ export function EditorView({ imageData, onBack }: EditorViewProps) {
               {customFilters.map((f, i) => {
                 const isActive = isSettingsEqual(settings, f.settings);
                 return (
-                <div key={'custom_'+i} className="relative h-16 sm:h-20">
+                <div key={'custom_'+i} className={`relative ${mobileThumbClass}`}>
                   <button 
                     onClick={() => setSettings(f.settings)}
                     className={`w-full h-full border-[3px] border-black flex items-center justify-center transition-all text-center group overflow-hidden ${isActive ? 'translate-x-[2px] translate-y-[2px] shadow-none outline outline-4 outline-offset-2 outline-black bg-cyan-300' : 'shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] hover:translate-x-[2px] hover:translate-y-[2px] hover:shadow-none bg-cyan-100'}`}
