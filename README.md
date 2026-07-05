@@ -1,11 +1,18 @@
-<div align="center">
+# PixelEdge
 
-<img width="1200" height="475" alt="GHBanner" src="https://github.com/user-attachments/assets/0aa67016-6eaf-458a-adb2-6e31a0763ed6" />
+PixelEdge is a Neo-brutalist offline-first image processing PWA using WebGL and OpenCV WebAssembly.
 
-  <h1>Built with AI Studio</h2>
+## Features
+- Real-time WebGPU image processing
+- Live intensity histogram via OpenCV.js WebAssembly
+- Customizable filter pipeline
+- IndexedDB preset and draft saving
 
-  <p>The fastest path from prompt to production with Gemini.</p>
+## Advanced C++ OpenCV Pipeline
+If you would like to test or build the C++ version of the OpenCV enhancement pipeline for even higher quality, check the `cpp/` directory. It contains an advanced pipeline utilizing Non-Local Means Denoising and CLAHE (Contrast Limited Adaptive Histogram Equalization). 
 
-  <a href="https://aistudio.google.com/apps">Start building</a>
-
-</div>
+To build it to WebAssembly yourself using Emscripten:
+```bash
+cd cpp
+./build.sh
+```

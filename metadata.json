@@ -1,0 +1,6 @@
+{
+  "name": "PixelEdge",
+  "description": "Neo-brutalist offline-first image processing PWA using WebGL and OpenCV.js.",
+  "requestFramePermissions": ["camera"],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
