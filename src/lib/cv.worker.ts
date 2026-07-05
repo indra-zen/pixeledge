@@ -7,8 +7,8 @@ self.onmessage = async (e: MessageEvent) => {
   
   try {
     const processed = await processor.processImage(imageData, type);
-    self.postMessage({ id, success: true, processed });
+    (self as unknown as Worker).postMessage({ id, success: true, processed }, [processed.data.buffer]);
   } catch (error) {
-    self.postMessage({ id, success: false, error: String(error) });
+    (self as unknown as Worker).postMessage({ id, success: false, error: String(error) });
   }
 };

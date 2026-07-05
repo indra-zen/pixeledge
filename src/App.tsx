@@ -24,6 +24,25 @@ export default function App() {
     };
   }, []);
 
+  useEffect(() => {
+    if (!window.history.state) {
+      window.history.replaceState({ view: 'CAMERA', drafts: false }, '');
+    }
+
+    const handlePopState = (e: PopStateEvent) => {
+      const state = e.state;
+      if (state) {
+        if (state.view) setCurrentView(state.view);
+        setShowDrafts(!!state.drafts);
+      } else {
+        setCurrentView('CAMERA');
+        setShowDrafts(false);
+      }
+    };
+    window.addEventListener('popstate', handlePopState);
+    return () => window.removeEventListener('popstate', handlePopState);
+  }, []);
+
   const handleCapture = async (imageSource: HTMLImageElement | HTMLCanvasElement) => {
     setCurrentView('PROCESSING');
     try {
@@ -61,11 +80,15 @@ export default function App() {
           }
         };
         workerRef.current?.addEventListener('message', handler);
-        workerRef.current?.postMessage({ id, imageData: inputImageData, type: 'denoise' });
+        workerRef.current?.postMessage(
+          { id, imageData: inputImageData, type: 'denoise' },
+          [inputImageData.data.buffer]
+        );
       });
 
       setImageData(processed);
       setCurrentView('EDITOR');
+      window.history.pushState({ view: 'EDITOR', drafts: false }, '');
     } catch (err) {
       console.error("Error processing image:", err);
       alert("Error: " + err);
@@ -104,6 +127,7 @@ export default function App() {
       setImageData(imgData);
       setCurrentView('EDITOR');
       setShowTutorial(true);
+      window.history.pushState({ view: 'EDITOR', drafts: false }, '');
     }
   };
 
@@ -111,6 +135,7 @@ export default function App() {
     const loadedDrafts = await db.getDrafts();
     setDrafts(loadedDrafts);
     setShowDrafts(true);
+    window.history.pushState({ view: 'CAMERA', drafts: true }, '');
   };
 
   const openDraft = (blob: Blob) => {
@@ -137,7 +162,7 @@ export default function App() {
       )}
       
       {currentView === 'EDITOR' && imageData && (
-        <EditorView imageData={imageData} onBack={() => setCurrentView('CAMERA')} />
+        <EditorView imageData={imageData} onBack={() => window.history.back()} />
       )}
 
       {/* Drafts Modal */}
@@ -147,7 +172,7 @@ export default function App() {
             <div className="flex justify-between items-center p-4 sm:p-6 border-b-[4px] border-black bg-white shrink-0">
               <h2 className="text-xl sm:text-3xl font-black uppercase tracking-wider">SAVED DRAFTS</h2>
               <button 
-                onClick={() => setShowDrafts(false)}
+                onClick={() => window.history.back()}
                 className="p-2 border-[4px] border-black shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] hover:translate-x-[2px] hover:translate-y-[2px] hover:shadow-none transition-all active:bg-gray-200"
               >
                 <X size={24} strokeWidth={3} />

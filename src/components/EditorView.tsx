@@ -36,6 +36,7 @@ export function EditorView({ imageData, onBack }: EditorViewProps) {
   const [saveModalOpen, setSaveModalOpen] = useState(false);
   const [presetName, setPresetName] = useState('');
   const [isDesktop, setIsDesktop] = useState(typeof window !== 'undefined' && window.innerWidth >= 1024);
+  const [toastMessage, setToastMessage] = useState<string | null>(null);
   
   const [renderTime, setRenderTime] = useState(0);
   const [histogram, setHistogram] = useState<number[]>(Array(32).fill(0));
@@ -95,7 +96,8 @@ export function EditorView({ imageData, onBack }: EditorViewProps) {
     canvasRef.current.toBlob(async (blob) => {
       if (blob) {
         await db.saveDraft(blob);
-        alert('Saved to drafts!');
+        setToastMessage('Saved to drafts!');
+        setTimeout(() => setToastMessage(null), 3000);
       }
     });
   };
@@ -344,6 +346,15 @@ export function EditorView({ imageData, onBack }: EditorViewProps) {
                 SAVE
               </button>
             </div>
+          </div>
+        </div>
+      )}
+
+      {toastMessage && (
+        <div className="fixed bottom-24 lg:bottom-12 left-1/2 -translate-x-1/2 z-[100] animate-in slide-in-from-bottom-5 fade-in duration-300">
+          <div className="bg-green-400 text-black border-[4px] border-black px-6 py-3 font-black uppercase text-sm shadow-[8px_8px_0px_0px_rgba(0,0,0,1)] flex items-center gap-3">
+            <Save size={20} />
+            {toastMessage}
           </div>
         </div>
       )}
