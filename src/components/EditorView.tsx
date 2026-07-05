@@ -12,19 +12,27 @@ interface EditorViewProps {
 }
 
 
-const getFilterCSS = (s: FilterSettings) => { return `brightness(${(1 + s.brightness) * 100}%) contrast(${s.contrast * 100}%) saturate(${s.saturation * 100}%) hue-rotate(${s.hue * 360}deg)`; };
+const getFilterCSS = (s: FilterSettings) => { 
+  return `brightness(${(1 + s.brightness) * 100}%) contrast(${s.contrast * 100}%) saturate(${s.saturation * 100}%) hue-rotate(${s.hue * 360}deg)${s.blur ? ` blur(${s.blur * 2}px)` : ''}`; 
+};
 
 const BUILT_IN_FILTERS: { name: string, settings: FilterSettings }[] = [
-  { name: 'Normal', settings: { brightness: 0, contrast: 1, saturation: 1, hue: 0, sharpness: 0, grain: 0, temperature: 0, vignette: 0 } },
-  { name: 'Vintage', settings: { brightness: 0.1, contrast: 0.8, saturation: 0.5, hue: 0.1, sharpness: 0.2, grain: 0.15, temperature: 0.3, vignette: 0.5 } },
-  { name: 'Cyberpunk', settings: { brightness: 0.1, contrast: 1.5, saturation: 1.8, hue: 0.8, sharpness: 0.5, grain: 0.05, temperature: -0.2, vignette: 0.4 } },
-  { name: 'Grayscale', settings: { brightness: 0, contrast: 1.2, saturation: 0, hue: 0, sharpness: 0, grain: 0.05, temperature: 0, vignette: 0 } },
-  { name: 'Cinematic', settings: { brightness: -0.1, contrast: 1.3, saturation: 0.8, hue: 0, sharpness: 0.3, grain: 0.08, temperature: -0.1, vignette: 0.6 } },
-  { name: 'Washed Out', settings: { brightness: 0.2, contrast: 0.6, saturation: 0.4, hue: 0, sharpness: 0, grain: 0, temperature: 0, vignette: 0 } },
-  { name: 'Neon', settings: { brightness: 0.1, contrast: 1.8, saturation: 2.5, hue: 0.5, sharpness: 0.8, grain: 0, temperature: 0, vignette: 0 } },
-  { name: 'Sepiaish', settings: { brightness: 0.05, contrast: 0.9, saturation: 0.6, hue: -0.1, sharpness: 0.1, grain: 0.08, temperature: 0.5, vignette: 0.3 } },
-  { name: 'Crisp', settings: { brightness: 0, contrast: 1.1, saturation: 1.1, hue: 0, sharpness: 1.5, grain: 0, temperature: 0, vignette: 0 } },
-  { name: 'Dark & Moody', settings: { brightness: -0.2, contrast: 1.3, saturation: 0.8, hue: 0, sharpness: 0.2, grain: 0.1, temperature: -0.2, vignette: 0.8 } },
+  { name: 'Normal', settings: { brightness: 0, contrast: 1, saturation: 1, hue: 0, sharpness: 0, grain: 0, temperature: 0, vignette: 0, blur: 0 } },
+  { name: 'Vintage', settings: { brightness: 0.1, contrast: 0.8, saturation: 0.5, hue: 0.1, sharpness: 0.2, grain: 0.15, temperature: 0.3, vignette: 0.5, blur: 0 } },
+  { name: 'Cyberpunk', settings: { brightness: 0.1, contrast: 1.5, saturation: 1.8, hue: 0.8, sharpness: 0.5, grain: 0.05, temperature: -0.2, vignette: 0.4, blur: 0 } },
+  { name: 'Grayscale', settings: { brightness: 0, contrast: 1.2, saturation: 0, hue: 0, sharpness: 0, grain: 0.05, temperature: 0, vignette: 0, blur: 0 } },
+  { name: 'Cinematic', settings: { brightness: -0.1, contrast: 1.3, saturation: 0.8, hue: 0, sharpness: 0.3, grain: 0.08, temperature: -0.1, vignette: 0.6, blur: 0 } },
+  { name: 'Washed Out', settings: { brightness: 0.2, contrast: 0.6, saturation: 0.4, hue: 0, sharpness: 0, grain: 0, temperature: 0, vignette: 0, blur: 0 } },
+  { name: 'Neon', settings: { brightness: 0.1, contrast: 1.8, saturation: 2.5, hue: 0.5, sharpness: 0.8, grain: 0, temperature: 0, vignette: 0, blur: 0 } },
+  { name: 'Sepiaish', settings: { brightness: 0.05, contrast: 0.9, saturation: 0.6, hue: -0.1, sharpness: 0.1, grain: 0.08, temperature: 0.5, vignette: 0.3, blur: 0 } },
+  { name: 'Crisp', settings: { brightness: 0, contrast: 1.1, saturation: 1.1, hue: 0, sharpness: 1.5, grain: 0, temperature: 0, vignette: 0, blur: 0 } },
+  { name: 'Dark & Moody', settings: { brightness: -0.2, contrast: 1.3, saturation: 0.8, hue: 0, sharpness: 0.2, grain: 0.1, temperature: -0.2, vignette: 0.8, blur: 0 } },
+  { name: 'Dreamy', settings: { brightness: 0.1, contrast: 0.9, saturation: 1.2, hue: 0.05, sharpness: 0, grain: 0, temperature: 0.1, vignette: 0.2, blur: 0.5 } },
+  { name: 'Cold Muted', settings: { brightness: 0, contrast: 0.9, saturation: 0.4, hue: -0.05, sharpness: 0.1, grain: 0.05, temperature: -0.4, vignette: 0.1, blur: 0 } },
+  { name: 'Golden Hour', settings: { brightness: 0.1, contrast: 1.1, saturation: 1.3, hue: 0.05, sharpness: 0.2, grain: 0.02, temperature: 0.6, vignette: 0.3, blur: 0 } },
+  { name: 'High Key', settings: { brightness: 0.3, contrast: 0.8, saturation: 1.0, hue: 0, sharpness: 0, grain: 0, temperature: 0, vignette: 0, blur: 0.1 } },
+  { name: 'Noir', settings: { brightness: -0.1, contrast: 1.5, saturation: 0, hue: 0, sharpness: 0.8, grain: 0.2, temperature: 0, vignette: 0.9, blur: 0 } },
+  { name: 'Gaussian Blur', settings: { brightness: 0, contrast: 1.0, saturation: 1.0, hue: 0, sharpness: 0, grain: 0, temperature: 0, vignette: 0, blur: 0.3 } }
 ];
 
 type DrawerType = 'PRESETS' | 'ADJUST' | 'STATS' | 'HISTOGRAM' | null;
@@ -37,7 +45,8 @@ const isSettingsEqual = (a: FilterSettings, b: FilterSettings) => {
          Math.abs(a.sharpness - b.sharpness) < 0.001 &&
          Math.abs((a.temperature || 0) - (b.temperature || 0)) < 0.001 &&
          Math.abs((a.vignette || 0) - (b.vignette || 0)) < 0.001 &&
-         Math.abs((a.grain || 0) - (b.grain || 0)) < 0.001;
+         Math.abs((a.grain || 0) - (b.grain || 0)) < 0.001 &&
+         Math.abs((a.blur || 0) - (b.blur || 0)) < 0.001;
 };
 
 export function EditorView({ imageData, onBack }: EditorViewProps) {
@@ -105,29 +114,40 @@ export function EditorView({ imageData, onBack }: EditorViewProps) {
   }, [imageData]);
 
   useEffect(() => {
-    let cancel = false;
-    
     if (engineRef.current) {
       const start = performance.now();
       engineRef.current.render(settings);
       setRenderTime(performance.now() - start);
-      
-      const imgData = engineRef.current.getImageData();
-      if (imgData) {
-        calculateHistogram(imgData).then(hist => {
-          if (!cancel) {
-            setHistogram(hist);
-          }
-        }).catch(err => {
-          console.error('Histogram error:', err);
-        });
-      }
     }
+  }, [settings]);
+
+  useEffect(() => {
+    let cancel = false;
+    
+    const timeout = setTimeout(() => {
+      // Only calculate if the histogram panel is likely to be visible
+      if (!isDesktop && activeDrawer !== 'HISTOGRAM' && activeDrawer !== 'STATS') {
+        return;
+      }
+      if (engineRef.current) {
+        const imgData = engineRef.current.getImageData();
+        if (imgData) {
+          calculateHistogram(imgData).then(hist => {
+            if (!cancel) {
+              setHistogram(hist);
+            }
+          }).catch(err => {
+            console.error('Histogram error:', err);
+          });
+        }
+      }
+    }, 300);
     
     return () => {
       cancel = true;
+      clearTimeout(timeout);
     };
-  }, [settings]);
+  }, [settings, isDesktop, activeDrawer]);
 
   const handleSliderChange = (key: keyof FilterSettings, value: number) => {
     setSettings(prev => ({ ...prev, [key]: value }));
@@ -235,13 +255,14 @@ export function EditorView({ imageData, onBack }: EditorViewProps) {
         {/* Desktop: Custom Pipeline */}
         <section id={isDesktop ? "tour-pipeline" : undefined} className="hidden lg:flex lg:col-span-4 lg:row-span-4 bg-white border-[4px] border-black p-4 shadow-[8px_8px_0px_0px_rgba(0,0,0,1)] flex-col shrink-0">
           <h2 className="font-black text-xl mb-4 border-b-2 border-black pb-2 uppercase">Pengaturan</h2>
-          <div className="space-y-6 flex-1 overflow-y-auto pr-2 no-scrollbar">
+          <div className="space-y-6 flex-1 overflow-y-auto pr-2 pb-12 no-scrollbar">
             <Slider label="KECERAHAN" value={settings.brightness} defaultValue={0} min={-1} max={1} step={0.01} onChange={(v) => handleSliderChange('brightness', v)} />
             <Slider label="KONTRAS" value={settings.contrast} defaultValue={1} min={0} max={3} step={0.01} onChange={(v) => handleSliderChange('contrast', v)} />
             <Slider label="SATURASI" value={settings.saturation} defaultValue={1} min={0} max={3} step={0.01} onChange={(v) => handleSliderChange('saturation', v)} />
             <Slider label="WARNA (HUE)" value={settings.hue} defaultValue={0} min={-1} max={1} step={0.01} onChange={(v) => handleSliderChange('hue', v)} />
             <Slider label="SUHU" value={settings.temperature || 0} defaultValue={0} min={-1} max={1} step={0.01} onChange={(v) => handleSliderChange('temperature', v)} />
             <Slider label="KETAJAMAN" value={settings.sharpness} defaultValue={0} min={-1} max={5} step={0.1} onChange={(v) => handleSliderChange('sharpness', v)} />
+            <Slider label="BLUR" value={settings.blur || 0} defaultValue={0} min={0} max={1} step={0.01} onChange={(v) => handleSliderChange('blur', v)} />
             <Slider label="VIGNETTE" value={settings.vignette || 0} defaultValue={0} min={0} max={1} step={0.01} onChange={(v) => handleSliderChange('vignette', v)} />
             <Slider label="GRAIN" value={settings.grain || 0} defaultValue={0} min={0} max={1} step={0.01} onChange={(v) => handleSliderChange('grain', v)} />
           </div>
@@ -379,13 +400,14 @@ export function EditorView({ imageData, onBack }: EditorViewProps) {
           )}
 
           {activeDrawer === 'ADJUST' && (
-            <div className="flex flex-col gap-5 pb-4 max-w-xl mx-auto">
+            <div className="flex flex-col gap-5 pb-24 max-w-xl mx-auto">
               <Slider label="KECERAHAN" value={settings.brightness} defaultValue={0} min={-1} max={1} step={0.01} onChange={(v) => handleSliderChange('brightness', v)} />
               <Slider label="KONTRAS" value={settings.contrast} defaultValue={1} min={0} max={3} step={0.01} onChange={(v) => handleSliderChange('contrast', v)} />
               <Slider label="SATURASI" value={settings.saturation} defaultValue={1} min={0} max={3} step={0.01} onChange={(v) => handleSliderChange('saturation', v)} />
               <Slider label="WARNA (HUE)" value={settings.hue} defaultValue={0} min={-1} max={1} step={0.01} onChange={(v) => handleSliderChange('hue', v)} />
               <Slider label="SUHU" value={settings.temperature || 0} defaultValue={0} min={-1} max={1} step={0.01} onChange={(v) => handleSliderChange('temperature', v)} />
               <Slider label="KETAJAMAN" value={settings.sharpness} defaultValue={0} min={-1} max={5} step={0.1} onChange={(v) => handleSliderChange('sharpness', v)} />
+              <Slider label="BLUR" value={settings.blur || 0} defaultValue={0} min={0} max={1} step={0.01} onChange={(v) => handleSliderChange('blur', v)} />
               <Slider label="VIGNETTE" value={settings.vignette || 0} defaultValue={0} min={0} max={1} step={0.01} onChange={(v) => handleSliderChange('vignette', v)} />
               <Slider label="GRAIN" value={settings.grain || 0} defaultValue={0} min={0} max={1} step={0.01} onChange={(v) => handleSliderChange('grain', v)} />
               <button onClick={() => setSaveModalOpen(true)} className="mt-4 w-full bg-black text-white py-3 font-black shadow-[4px_4px_0px_0px_rgba(255,230,0,1)] hover:bg-zinc-800 transition-colors uppercase text-sm border-2 border-black hover:border-black active:translate-y-[2px] shrink-0">SIMPAN JADI FILTER BARU</button>

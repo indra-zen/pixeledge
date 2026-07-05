@@ -9,6 +9,7 @@ export interface FilterSettings {
   temperature: number; // -1 to 1 (blue to yellow)
   vignette: number; // 0 to 1
   grain: number; // 0 to 1
+  blur?: number; // 0 to 1
 }
 
 export interface CustomFilter {

@@ -47,6 +47,7 @@ export class WebGLFilterEngine {
       uniform float u_temperature;
       uniform float u_vignette;
       uniform float u_grain;
+      uniform float u_blurDistance;
       
       // Convolution parameters
       uniform vec2 u_textureSize;
@@ -73,20 +74,37 @@ export class WebGLFilterEngine {
       }
 
       void main() {
-        // Convolution
-        vec2 onePixel = vec2(1.0, 1.0) / u_textureSize;
-        vec4 colorSum =
-          texture2D(u_image, v_texCoord + onePixel * vec2(-1, -1)) * u_kernel[0] +
-          texture2D(u_image, v_texCoord + onePixel * vec2( 0, -1)) * u_kernel[1] +
-          texture2D(u_image, v_texCoord + onePixel * vec2( 1, -1)) * u_kernel[2] +
-          texture2D(u_image, v_texCoord + onePixel * vec2(-1,  0)) * u_kernel[3] +
-          texture2D(u_image, v_texCoord + onePixel * vec2( 0,  0)) * u_kernel[4] +
-          texture2D(u_image, v_texCoord + onePixel * vec2( 1,  0)) * u_kernel[5] +
-          texture2D(u_image, v_texCoord + onePixel * vec2(-1,  1)) * u_kernel[6] +
-          texture2D(u_image, v_texCoord + onePixel * vec2( 0,  1)) * u_kernel[7] +
-          texture2D(u_image, v_texCoord + onePixel * vec2( 1,  1)) * u_kernel[8] ;
+        vec4 baseColor;
         
-        vec4 baseColor = vec4((colorSum / u_kernelWeight).rgb, 1.0);
+        if (u_blurDistance > 1.0) {
+            float goldenAngle = 2.39996323;
+            float maxBlurPx = min(u_textureSize.x, u_textureSize.y) * 0.03; // Max blur is 3% of image size
+            float blurRadius = (u_blurDistance - 1.0) * maxBlurPx; 
+            float total = 0.0;
+            vec4 bSum = vec4(0.0);
+            for(int i = 0; i < 32; i++) {
+                float r = sqrt(float(i) + 0.5) / sqrt(32.0);
+                float theta = float(i) * goldenAngle;
+                vec2 offset = vec2(cos(theta), sin(theta)) * r * blurRadius;
+                bSum += texture2D(u_image, v_texCoord + offset / u_textureSize);
+                total += 1.0;
+            }
+            baseColor = bSum / total;
+        } else {
+            vec2 onePixel = vec2(1.0, 1.0) / u_textureSize;
+            vec4 colorSum =
+              texture2D(u_image, v_texCoord + onePixel * vec2(-1, -1)) * u_kernel[0] +
+              texture2D(u_image, v_texCoord + onePixel * vec2( 0, -1)) * u_kernel[1] +
+              texture2D(u_image, v_texCoord + onePixel * vec2( 1, -1)) * u_kernel[2] +
+              texture2D(u_image, v_texCoord + onePixel * vec2(-1,  0)) * u_kernel[3] +
+              texture2D(u_image, v_texCoord + onePixel * vec2( 0,  0)) * u_kernel[4] +
+              texture2D(u_image, v_texCoord + onePixel * vec2( 1,  0)) * u_kernel[5] +
+              texture2D(u_image, v_texCoord + onePixel * vec2(-1,  1)) * u_kernel[6] +
+              texture2D(u_image, v_texCoord + onePixel * vec2( 0,  1)) * u_kernel[7] +
+              texture2D(u_image, v_texCoord + onePixel * vec2( 1,  1)) * u_kernel[8] ;
+            
+            baseColor = vec4((colorSum / u_kernelWeight).rgb, 1.0);
+        }
         
         // Base color could be out of bounds after convolution
         baseColor.rgb = clamp(baseColor.rgb, 0.0, 1.0);
@@ -231,20 +249,30 @@ export class WebGLFilterEngine {
     gl.uniform1f(gl.getUniformLocation(program, "u_temperature"), settings.temperature || 0);
     gl.uniform1f(gl.getUniformLocation(program, "u_vignette"), settings.vignette || 0);
     gl.uniform1f(gl.getUniformLocation(program, "u_grain"), settings.grain || 0);
+    gl.uniform1f(gl.getUniformLocation(program, "u_blurDistance"), settings.blur ? 1.0 + settings.blur : 1.0);
     
     gl.uniform2f(gl.getUniformLocation(program, "u_textureSize"), gl.canvas.width, gl.canvas.height);
 
-    // Kernel for sharpness
-    // Base Identity: [0, 0, 0, 0, 1, 0, 0, 0, 0]
-    // Sharpen edge: [0, -1, 0, -1, 5, -1, 0, -1, 0]
-    const s = settings.sharpness;
-    const kernel = [
-       0, -s,  0,
-      -s, 1 + 4*s, -s,
-       0, -s,  0
+    // Kernel for sharpness and blur
+    const s = settings.sharpness || 0;
+    
+    let kernel = [ 
+       0, 0, 0,
+       0, 1, 0,
+       0, 0, 0
     ];
+    let weight = 1.0;
+
+    if (s > 0) {
+      kernel = [ 
+         0, -s,  0,
+        -s, 1 + 4*s, -s,
+         0, -s,  0
+      ];
+    }
+
     gl.uniform1fv(gl.getUniformLocation(program, "u_kernel[0]"), kernel);
-    gl.uniform1f(gl.getUniformLocation(program, "u_kernelWeight"), 1.0); // 1.0 for this normalized kernel
+    gl.uniform1f(gl.getUniformLocation(program, "u_kernelWeight"), weight);
 
     // Draw
     gl.drawArrays(gl.TRIANGLES, 0, 6);

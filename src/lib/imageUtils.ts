@@ -8,7 +8,14 @@ export async function calculateHistogram(imageData: ImageData, bins: number = 64
   let maxR = 0, maxG = 0, maxB = 0, maxL = 0;
   
   const binSize = 256 / bins;
-  for (let i = 0; i < data.length; i += 4) {
+  
+  // Use a stride to sample pixels for faster calculation on large images
+  const totalPixels = data.length / 4;
+  const targetSamples = 100000;
+  let stride = Math.max(1, Math.floor(totalPixels / targetSamples));
+  const step = stride * 4;
+
+  for (let i = 0; i < data.length; i += step) {
     const r = data[i];
     const g = data[i + 1];
     const b = data[i + 2];
