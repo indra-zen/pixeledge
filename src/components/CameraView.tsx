@@ -23,6 +23,9 @@ export function CameraView({ onCapture, onSelectDraft }: CameraViewProps) {
     stopCamera();
     setCameraError(null);
     try {
+      if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+        throw new Error("Camera API is not supported in this browser or context (requires HTTPS).");
+      }
       const newStream = await navigator.mediaDevices.getUserMedia({
         video: { facingMode, width: { ideal: 1920 }, height: { ideal: 1080 } }
       });
@@ -91,6 +94,7 @@ export function CameraView({ onCapture, onSelectDraft }: CameraViewProps) {
             ref={fileInputRef} 
             className="hidden" 
             accept="image/*" 
+            capture="environment"
             onChange={handleFileUpload} 
           />
         </div>
