@@ -28,6 +28,11 @@ export default defineConfig(() => {
             }
           ]
         },
+        devOptions: {
+          enabled: true,
+          type: 'module',
+          navigateFallback: 'index.html',
+        },
         workbox: {
           globPatterns: ['**/*.{js,css,html,ico,png,svg,wasm}'],
           globIgnores: ['**/opencv*.js'],
