@@ -11,6 +11,7 @@ export function CameraView({ onCapture, onSelectDraft }: CameraViewProps) {
   const videoRef = useRef<HTMLVideoElement>(null);
   const [facingMode, setFacingMode] = useState<'user' | 'environment'>('environment');
   const [stream, setStream] = useState<MediaStream | null>(null);
+  const [cameraError, setCameraError] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
@@ -20,6 +21,7 @@ export function CameraView({ onCapture, onSelectDraft }: CameraViewProps) {
 
   const startCamera = async () => {
     stopCamera();
+    setCameraError(null);
     try {
       const newStream = await navigator.mediaDevices.getUserMedia({
         video: { facingMode, width: { ideal: 1920 }, height: { ideal: 1080 } }
@@ -30,6 +32,7 @@ export function CameraView({ onCapture, onSelectDraft }: CameraViewProps) {
       }
     } catch (err) {
       console.error("Error accessing camera:", err);
+      setCameraError(String(err));
     }
   };
 
@@ -96,6 +99,29 @@ export function CameraView({ onCapture, onSelectDraft }: CameraViewProps) {
       <main className="flex-1 grid grid-cols-1 gap-4 sm:gap-6 min-h-0 relative">
         <section className="col-span-1 bg-black border-[4px] border-black relative shadow-[8px_8px_0px_0px_rgba(0,0,0,1)] overflow-hidden flex items-center justify-center group">
           <div className="absolute top-4 left-4 z-10 bg-white border-2 border-black px-2 py-1 text-[10px] sm:text-xs font-bold uppercase">Camera</div>
+          {!stream && (
+            <div className="absolute inset-0 z-20 flex flex-col items-center justify-center bg-black/80 p-6 text-center">
+              <Camera size={48} className="text-white mb-4 opacity-50" />
+              {cameraError ? (
+                <>
+                  <p className="text-red-400 font-bold mb-4">{cameraError}</p>
+                  <button 
+                    onClick={startCamera}
+                    className="bg-white border-[4px] border-black px-6 py-3 font-black uppercase text-xl shadow-[6px_6px_0px_0px_rgba(0,0,0,1)] hover:translate-x-[2px] hover:translate-y-[2px] hover:shadow-none active:bg-pink-400 transition-all text-black"
+                  >
+                    Allow Camera Access
+                  </button>
+                </>
+              ) : (
+                <button 
+                  onClick={startCamera}
+                  className="bg-cyan-400 border-[4px] border-black px-6 py-3 font-black uppercase text-xl shadow-[6px_6px_0px_0px_rgba(0,0,0,1)] hover:translate-x-[2px] hover:translate-y-[2px] hover:shadow-none active:bg-pink-400 transition-all text-black"
+                >
+                  Start Camera
+                </button>
+              )}
+            </div>
+          )}
           <video 
             ref={videoRef} 
             autoPlay 
