@@ -1,4 +1,4 @@
-import React, { useRef, useState, useEffect } from 'react';
+import React, { useRef, useState, useEffect, useMemo } from 'react';
 import { Camera, RefreshCw, Upload, Image as ImageIcon } from 'lucide-react';
 import { db } from '../lib/db';
 
@@ -13,11 +13,15 @@ export function CameraView({ onCapture, onSelectDraft }: CameraViewProps) {
   const [stream, setStream] = useState<MediaStream | null>(null);
   const [cameraError, setCameraError] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const nativeCamRef = useRef<HTMLInputElement>(null);
+  const isMobile = useMemo(() => /iPhone|iPad|iPod|Android/i.test(navigator.userAgent), []);
 
   useEffect(() => {
-    startCamera();
+    if (!isMobile) {
+      startCamera();
+    }
     return () => stopCamera();
-  }, [facingMode]);
+  }, [facingMode, isMobile]);
 
   const startCamera = async () => {
     stopCamera();
@@ -94,6 +98,13 @@ export function CameraView({ onCapture, onSelectDraft }: CameraViewProps) {
             ref={fileInputRef} 
             className="hidden" 
             accept="image/*" 
+            onChange={handleFileUpload} 
+          />
+          <input 
+            type="file" 
+            ref={nativeCamRef} 
+            className="hidden" 
+            accept="image/*" 
             capture="environment"
             onChange={handleFileUpload} 
           />
@@ -103,7 +114,18 @@ export function CameraView({ onCapture, onSelectDraft }: CameraViewProps) {
       <main className="flex-1 grid grid-cols-1 gap-4 sm:gap-6 min-h-0 relative">
         <section className="col-span-1 bg-black border-[4px] border-black relative shadow-[8px_8px_0px_0px_rgba(0,0,0,1)] overflow-hidden flex items-center justify-center group">
           <div className="absolute top-4 left-4 z-10 bg-white border-2 border-black px-2 py-1 text-[10px] sm:text-xs font-bold uppercase">Camera</div>
-          {!stream && (
+          {isMobile ? (
+            <div className="absolute inset-0 z-20 flex flex-col items-center justify-center bg-black p-6 text-center">
+              <Camera size={64} className="text-cyan-400 mb-8" />
+              <button 
+                onClick={() => nativeCamRef.current?.click()}
+                className="bg-cyan-400 border-[4px] border-black px-8 py-4 font-black uppercase text-2xl shadow-[8px_8px_0px_0px_rgba(0,0,0,1)] hover:translate-x-[2px] hover:translate-y-[2px] hover:shadow-none active:bg-pink-400 transition-all text-black mb-4"
+              >
+                OPEN CAMERA
+              </button>
+              <p className="text-white/60 text-sm font-bold max-w-xs mt-4">Using native camera for better quality on mobile devices.</p>
+            </div>
+          ) : !stream && (
             <div className="absolute inset-0 z-20 flex flex-col items-center justify-center bg-black/80 p-6 text-center">
               <Camera size={48} className="text-white mb-4 opacity-50" />
               {cameraError ? (
@@ -137,21 +159,25 @@ export function CameraView({ onCapture, onSelectDraft }: CameraViewProps) {
             {facingMode.toUpperCase()} CAM ACTIVE
           </div>
 
-          <div className="absolute bottom-6 sm:bottom-12 left-0 right-0 flex justify-center z-20">
-            <button 
-              onClick={handleCapture}
-              className="bg-white border-[6px] border-black rounded-full w-20 h-20 sm:w-24 sm:h-24 shadow-[8px_8px_0px_0px_rgba(0,0,0,1)] hover:translate-x-[2px] hover:translate-y-[2px] hover:shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] active:scale-95 transition-all flex items-center justify-center group-hover:bg-cyan-400"
-            >
-              <div className="bg-black w-8 h-8 sm:w-10 sm:h-10 rounded-full transition-transform group-hover:scale-110"></div>
-            </button>
-          </div>
-          
-          <button 
-            onClick={() => setFacingMode(prev => prev === 'user' ? 'environment' : 'user')}
-            className="absolute top-4 right-4 z-20 bg-white border-[4px] border-black p-3 sm:p-4 shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] hover:translate-x-[2px] hover:translate-y-[2px] hover:shadow-none transition-all active:bg-pink-400"
-          >
-            <RefreshCw size={24} className="sm:w-8 sm:h-8" />
-          </button>
+          {!isMobile && (
+            <>
+              <div className="absolute bottom-6 sm:bottom-12 left-0 right-0 flex justify-center z-20">
+                <button 
+                  onClick={handleCapture}
+                  className="bg-white border-[6px] border-black rounded-full w-20 h-20 sm:w-24 sm:h-24 shadow-[8px_8px_0px_0px_rgba(0,0,0,1)] hover:translate-x-[2px] hover:translate-y-[2px] hover:shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] active:scale-95 transition-all flex items-center justify-center group-hover:bg-cyan-400"
+                >
+                  <div className="bg-black w-8 h-8 sm:w-10 sm:h-10 rounded-full transition-transform group-hover:scale-110"></div>
+                </button>
+              </div>
+              
+              <button 
+                onClick={() => setFacingMode(prev => prev === 'user' ? 'environment' : 'user')}
+                className="absolute top-4 right-4 z-20 bg-white border-[4px] border-black p-3 sm:p-4 shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] hover:translate-x-[2px] hover:translate-y-[2px] hover:shadow-none transition-all active:bg-pink-400"
+              >
+                <RefreshCw size={24} className="sm:w-8 sm:h-8" />
+              </button>
+            </>
+          )}
         </section>
       </main>
 

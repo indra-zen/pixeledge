@@ -1,12 +1,11 @@
-import cvOriginal from '@techstark/opencv-js';
-
 export class OpenCVProcessor {
   private ready = false;
   private cv: any = null;
   private initPromise: Promise<void> | null = null;
   
   constructor() {
-    this.init();
+    // Start initialization in background
+    this.init().catch(console.error);
   }
 
   async init() {
@@ -17,7 +16,9 @@ export class OpenCVProcessor {
     }
 
     this.initPromise = (async () => {
-      let resolvedCv = cvOriginal;
+      // Dynamically import the heavy module to avoid blocking the main thread during app load
+      const cvModule = await import('@techstark/opencv-js');
+      let resolvedCv = cvModule.default || cvModule;
       
       // Some bundlers/environments wrap the export
       if (typeof resolvedCv === 'function') {
