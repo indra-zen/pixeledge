@@ -16,6 +16,15 @@ export class OpenCVProcessor {
     }
 
     this.initPromise = (async () => {
+      // Wait for Service Worker to be active so it can intercept and cache the heavy OpenCV module
+      if ('serviceWorker' in navigator) {
+        try {
+          await navigator.serviceWorker.ready;
+        } catch (e) {
+          console.warn('Service Worker not ready, proceeding anyway', e);
+        }
+      }
+
       // Dynamically import the heavy module to avoid blocking the main thread during app load
       const cvModule = await import('@techstark/opencv-js');
       let resolvedCv = cvModule.default || cvModule;

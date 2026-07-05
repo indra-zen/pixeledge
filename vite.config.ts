@@ -30,8 +30,23 @@ export default defineConfig(() => {
         },
         workbox: {
           globPatterns: ['**/*.{js,css,html,ico,png,svg,wasm}'],
+          globIgnores: ['**/opencv*.js'],
           maximumFileSizeToCacheInBytes: 20 * 1024 * 1024, // 20 MB
           runtimeCaching: [
+            {
+              urlPattern: /.*opencv.*\.js(\?.*)?$/i,
+              handler: 'CacheFirst',
+              options: {
+                cacheName: 'opencv-cache',
+                expiration: {
+                  maxEntries: 1,
+                  maxAgeSeconds: 60 * 60 * 24 * 365
+                },
+                cacheableResponse: {
+                  statuses: [0, 200]
+                }
+              }
+            },
             {
               urlPattern: /^https:\/\/fonts\.googleapis\.com\/.*/i,
               handler: 'CacheFirst',
