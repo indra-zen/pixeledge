@@ -410,7 +410,7 @@ export function EditorView({ imageData, onBack }: EditorViewProps) {
         
         {/* Canvas Section */}
         <section id="tour-render-stream" className="flex-1 lg:col-span-8 lg:row-span-4 bg-black lg:border-[4px] lg:border-black lg:shadow-[8px_8px_0px_0px_rgba(0,0,0,1)] relative flex items-center justify-center overflow-hidden">
-          <div className="w-full h-full flex items-center justify-center bg-[radial-gradient(circle,_#333_1px,_transparent_1px)] [background-size:20px_20px] p-4 pb-20 sm:pb-24 lg:pb-4 lg:p-8">
+          <div className="w-full h-full flex items-center justify-center bg-[radial-gradient(circle,_#333_1px,_transparent_1px)] [background-size:20px_20px] p-4 lg:p-8">
             <TransformWrapper
               disabled={isCropping}
               initialScale={1}
@@ -543,11 +543,10 @@ export function EditorView({ imageData, onBack }: EditorViewProps) {
           </div>
         </section>
 
-      </main>
 
       {/* Mobile: Drawer Overlay */}
       <div 
-        className={`lg:hidden absolute bottom-[72px] sm:bottom-[88px] left-0 right-0 bg-white border-t-[4px] border-black transition-transform duration-300 z-20 flex flex-col shadow-[0_-8px_0_0_rgba(0,0,0,1)]
+        className={`lg:hidden absolute bottom-0 left-0 right-0 bg-white border-t-[4px] border-black transition-transform duration-300 z-20 flex flex-col shadow-[0_-8px_0_0_rgba(0,0,0,1)]
         ${activeDrawer ? 'translate-y-0' : 'translate-y-[120%]'} 
         h-[45vh] sm:h-[50vh]`}
       >
@@ -605,7 +604,7 @@ export function EditorView({ imageData, onBack }: EditorViewProps) {
           )}
 
           {activeDrawer === 'ADJUST' && (
-            <div className="flex flex-col gap-5 pb-24 max-w-xl mx-auto">
+            <div className="flex flex-col gap-5 pb-4 max-w-xl mx-auto">
               <Slider icon={Sun} label="KECERAHAN" value={settings.brightness} defaultValue={0} min={-1} max={1} step={0.01} name="brightness" onChange={handleSliderChange} />
               <Slider icon={Contrast} label="KONTRAS" value={settings.contrast} defaultValue={1} min={0} max={3} step={0.01} name="contrast" onChange={handleSliderChange} />
               <Slider icon={Droplet} label="SATURASI" value={settings.saturation} defaultValue={1} min={0} max={3} step={0.01} name="saturation" onChange={handleSliderChange} />
@@ -653,9 +652,11 @@ export function EditorView({ imageData, onBack }: EditorViewProps) {
           )}
         </div>
       </div>
+      </main>
+
 
       {/* Mobile: Bottom Action Bar */}
-      <footer className="lg:hidden absolute bottom-0 w-full bg-white border-t-[4px] border-black p-2 sm:p-3 flex gap-2 shrink-0 z-30 shadow-[0_-4px_0_0_rgba(0,0,0,1)]">
+      <footer className="lg:hidden w-full bg-white border-t-[4px] border-black p-2 sm:p-3 flex gap-2 shrink-0 z-30 shadow-[0_-4px_0_0_rgba(0,0,0,1)]">
         <button id={!isDesktop ? "tour-presets" : undefined} onClick={() => handleToggleDrawer('PRESETS')} className={`flex-1 border-[3px] border-black py-1 sm:py-2 font-black text-[10px] sm:text-xs flex flex-col items-center justify-center gap-1 shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] active:translate-y-[2px] active:translate-x-[2px] active:shadow-none transition-all ${activeDrawer === 'PRESETS' ? 'bg-cyan-400 translate-y-[2px] translate-x-[2px] shadow-none' : 'bg-white hover:bg-gray-100'}`}>
           <ImageIcon size={20} /> <span className="uppercase">Filter</span>
         </button>
