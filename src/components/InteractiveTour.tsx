@@ -9,7 +9,7 @@ const TOUR_STEPS = [
   {
     target: '#tour-render-stream',
     title: 'AREA GAMBAR',
-    content: 'Ini adalah kanvas WebGPU kamu. Perubahan akan terlihat langsung secara real-time (60 FPS).',
+    content: 'Ini adalah kanvas WebGPU kamu. Cubit layar (pinch) atau gunakan tombol untuk zoom dan geser gambar. Perubahan terlihat langsung secara real-time.',
     placement: 'bottom',
     color: 'bg-pink-400'
   },
@@ -37,14 +37,14 @@ const TOUR_STEPS = [
   {
     target: '#tour-presets',
     title: 'FILTER BAWAAN',
-    content: 'Filter sekali klik yang dibuat menggunakan teknologi WebGL/WebGPU.',
+    content: 'Filter sekali klik. Gunakan tombol panah Kiri/Kanan di keyboard untuk mengganti filter dengan cepat.',
     placement: 'top',
     color: 'bg-yellow-400'
   },
   {
     target: '#tour-actions',
     title: 'SIMPAN & EKSPOR',
-    content: 'Simpan filter buatanmu, simpan foto jadi draf offline, atau unduh hasil editanmu.',
+    content: 'Undo/Redo (bisa juga tekan Ctrl+Z/Ctrl+Y), simpan filter buatanmu, draf offline, atau unduh hasil editanmu.',
     placement: 'bottom',
     color: 'bg-green-400'
   }
