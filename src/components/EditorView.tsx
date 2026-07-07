@@ -7,34 +7,17 @@ import { calculateHistogram } from '../lib/imageUtils';
 import { HistogramPanel, HistogramData } from './HistogramPanel';
 import { CropOverlay } from './CropOverlay';
 
+import { TransformWrapper, TransformComponent } from 'react-zoom-pan-pinch';
+import { vibrate } from '../lib/utils';
+import { Slider } from './Slider';
+import { BUILT_IN_FILTERS, getFilterCSS } from '../lib/filters';
+
 interface EditorViewProps {
   imageData: ImageData;
   onBack: () => void;
 }
 
 
-const getFilterCSS = (s: FilterSettings) => { 
-  return `brightness(${(1 + s.brightness) * 100}%) contrast(${s.contrast * 100}%) saturate(${s.saturation * 100}%) hue-rotate(${s.hue * 360}deg)${s.blur ? ` blur(${s.blur * 2}px)` : ''}`; 
-};
-
-const BUILT_IN_FILTERS: { name: string, settings: FilterSettings }[] = [
-  { name: 'Normal', settings: { brightness: 0, contrast: 1, saturation: 1, hue: 0, sharpness: 0, grain: 0, temperature: 0, vignette: 0, blur: 0 } },
-  { name: 'Vintage', settings: { brightness: 0.1, contrast: 0.8, saturation: 0.5, hue: 0.1, sharpness: 0.2, grain: 0.15, temperature: 0.3, vignette: 0.5, blur: 0 } },
-  { name: 'Cyberpunk', settings: { brightness: 0.1, contrast: 1.5, saturation: 1.8, hue: 0.8, sharpness: 0.5, grain: 0.05, temperature: -0.2, vignette: 0.4, blur: 0 } },
-  { name: 'Grayscale', settings: { brightness: 0, contrast: 1.2, saturation: 0, hue: 0, sharpness: 0, grain: 0.05, temperature: 0, vignette: 0, blur: 0 } },
-  { name: 'Cinematic', settings: { brightness: -0.1, contrast: 1.3, saturation: 0.8, hue: 0, sharpness: 0.3, grain: 0.08, temperature: -0.1, vignette: 0.6, blur: 0 } },
-  { name: 'Washed Out', settings: { brightness: 0.2, contrast: 0.6, saturation: 0.4, hue: 0, sharpness: 0, grain: 0, temperature: 0, vignette: 0, blur: 0 } },
-  { name: 'Neon', settings: { brightness: 0.1, contrast: 1.8, saturation: 2.5, hue: 0.5, sharpness: 0.8, grain: 0, temperature: 0, vignette: 0, blur: 0 } },
-  { name: 'Sepiaish', settings: { brightness: 0.05, contrast: 0.9, saturation: 0.6, hue: -0.1, sharpness: 0.1, grain: 0.08, temperature: 0.5, vignette: 0.3, blur: 0 } },
-  { name: 'Crisp', settings: { brightness: 0, contrast: 1.1, saturation: 1.1, hue: 0, sharpness: 1.5, grain: 0, temperature: 0, vignette: 0, blur: 0 } },
-  { name: 'Dark & Moody', settings: { brightness: -0.2, contrast: 1.3, saturation: 0.8, hue: 0, sharpness: 0.2, grain: 0.1, temperature: -0.2, vignette: 0.8, blur: 0 } },
-  { name: 'Dreamy', settings: { brightness: 0.1, contrast: 0.9, saturation: 1.2, hue: 0.05, sharpness: 0, grain: 0, temperature: 0.1, vignette: 0.2, blur: 0.5 } },
-  { name: 'Cold Muted', settings: { brightness: 0, contrast: 0.9, saturation: 0.4, hue: -0.05, sharpness: 0.1, grain: 0.05, temperature: -0.4, vignette: 0.1, blur: 0 } },
-  { name: 'Golden Hour', settings: { brightness: 0.1, contrast: 1.1, saturation: 1.3, hue: 0.05, sharpness: 0.2, grain: 0.02, temperature: 0.6, vignette: 0.3, blur: 0 } },
-  { name: 'High Key', settings: { brightness: 0.3, contrast: 0.8, saturation: 1.0, hue: 0, sharpness: 0, grain: 0, temperature: 0, vignette: 0, blur: 0.1 } },
-  { name: 'Noir', settings: { brightness: -0.1, contrast: 1.5, saturation: 0, hue: 0, sharpness: 0.8, grain: 0.2, temperature: 0, vignette: 0.9, blur: 0 } },
-  { name: 'Gaussian Blur', settings: { brightness: 0, contrast: 1.0, saturation: 1.0, hue: 0, sharpness: 0, grain: 0, temperature: 0, vignette: 0, blur: 0.3 } }
-];
 
 type DrawerType = 'PRESETS' | 'ADJUST' | 'STATS' | 'HISTOGRAM' | null;
 
@@ -63,6 +46,16 @@ export function EditorView({ imageData, onBack }: EditorViewProps) {
   
   const [settings, setSettings] = useState<FilterSettings>(BUILT_IN_FILTERS[0].settings);
   const [activeDrawer, setActiveDrawer] = useState<DrawerType>('PRESETS');
+
+  const handleToggleDrawer = (drawer: DrawerType) => {
+    vibrate(10);
+    setActiveDrawer(activeDrawer === drawer ? null : drawer);
+  };
+
+  const handleSelectPreset = (newSettings: FilterSettings) => {
+    vibrate(10);
+    setSettings(newSettings);
+  };
   const [customFilters, setCustomFilters] = useState<CustomFilter[]>([]);
   const [showDownloadMenu, setShowDownloadMenu] = useState(false);
   const [saveModalOpen, setSaveModalOpen] = useState(false);
@@ -179,9 +172,10 @@ export function EditorView({ imageData, onBack }: EditorViewProps) {
     return () => clearTimeout(timeout);
   }, [settings, historyIndex]);
 
-  const handleSliderChange = (key: keyof FilterSettings, value: number) => {
+  const handleSliderChange = useCallback((value: number, key?: string) => {
+    if (!key) return;
     setSettings(prev => ({ ...prev, [key]: value }));
-  };
+  }, []);
 
   const handleCrop = (cropBox: { x: number; y: number; width: number; height: number }) => {
     if (!engineRef.current) return;
@@ -237,23 +231,74 @@ export function EditorView({ imageData, onBack }: EditorViewProps) {
     setTimeout(() => setToastMessage(null), 3000);
   };
 
-  const handleUndo = () => {
+  const handleUndo = useCallback(() => {
     if (historyIndex > 0) {
+      vibrate(10);
       isUndoRedoRef.current = true;
       const newIndex = historyIndex - 1;
       setHistoryIndex(newIndex);
       setSettings(settingsHistory[newIndex]);
     }
-  };
+  }, [historyIndex, settingsHistory]);
 
-  const handleRedo = () => {
+  const handleRedo = useCallback(() => {
     if (historyIndex < settingsHistory.length - 1) {
+      vibrate(10);
       isUndoRedoRef.current = true;
       const newIndex = historyIndex + 1;
       setHistoryIndex(newIndex);
       setSettings(settingsHistory[newIndex]);
     }
-  };
+  }, [historyIndex, settingsHistory]);
+
+  const handlePrevFilter = useCallback(() => {
+    const allFilters = [...BUILT_IN_FILTERS, ...customFilters];
+    const currentIndex = allFilters.findIndex(f => isSettingsEqual(settings, f.settings));
+    if (currentIndex > 0) {
+      setSettings(allFilters[currentIndex - 1].settings);
+    } else if (currentIndex === -1) {
+      setSettings(allFilters[0].settings);
+    }
+  }, [settings, customFilters]);
+
+  const handleNextFilter = useCallback(() => {
+    const allFilters = [...BUILT_IN_FILTERS, ...customFilters];
+    const currentIndex = allFilters.findIndex(f => isSettingsEqual(settings, f.settings));
+    if (currentIndex !== -1 && currentIndex < allFilters.length - 1) {
+      setSettings(allFilters[currentIndex + 1].settings);
+    } else if (currentIndex === -1) {
+      setSettings(allFilters[0].settings);
+    }
+  }, [settings, customFilters]);
+
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.target instanceof HTMLInputElement || e.target instanceof HTMLTextAreaElement) {
+        return;
+      }
+      
+      if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'z') {
+        e.preventDefault();
+        if (e.shiftKey) {
+          handleRedo();
+        } else {
+          handleUndo();
+        }
+      } else if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'y') {
+        e.preventDefault();
+        handleRedo();
+      } else if (e.key === 'ArrowLeft') {
+        e.preventDefault();
+        handlePrevFilter();
+      } else if (e.key === 'ArrowRight') {
+        e.preventDefault();
+        handleNextFilter();
+      }
+    };
+
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [handleUndo, handleRedo, handlePrevFilter, handleNextFilter]);
 
   const handleSaveDraft = async () => {
     if (!canvasRef.current) return;
@@ -340,10 +385,10 @@ export function EditorView({ imageData, onBack }: EditorViewProps) {
                  <Undo size={18} />
               </button>
             )}
-            <button onClick={() => setIsCropping(!isCropping)} className={`border-[3px] border-black px-2 sm:px-3 py-1 sm:py-2 font-bold shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] hover:translate-x-[2px] hover:translate-y-[2px] hover:shadow-none transition-all flex items-center justify-center gap-2 mr-2 ${isCropping ? 'bg-blue-300 translate-x-[2px] translate-y-[2px] shadow-none' : 'bg-blue-400'}`}>
+            <button onClick={() => { vibrate(10); setIsCropping(!isCropping); }} className={`border-[3px] border-black px-2 sm:px-3 py-1 sm:py-2 font-bold shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] hover:translate-x-[2px] hover:translate-y-[2px] hover:shadow-none transition-all flex items-center justify-center gap-2 mr-2 ${isCropping ? 'bg-blue-300 translate-x-[2px] translate-y-[2px] shadow-none' : 'bg-blue-400'}`}>
                <Crop size={18} /> <span className="hidden sm:inline uppercase">Potong</span>
             </button>
-            <button onClick={() => setShowDownloadMenu(!showDownloadMenu)} className="bg-green-400 border-[3px] border-black px-2 sm:px-3 py-1 sm:py-2 font-bold shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] hover:translate-x-[2px] hover:translate-y-[2px] hover:shadow-none transition-all flex items-center justify-center gap-2">
+            <button onClick={() => { vibrate(10); setShowDownloadMenu(!showDownloadMenu); }} className="bg-green-400 border-[3px] border-black px-2 sm:px-3 py-1 sm:py-2 font-bold shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] hover:translate-x-[2px] hover:translate-y-[2px] hover:shadow-none transition-all flex items-center justify-center gap-2">
                <Download size={18} /> <span className="hidden sm:inline uppercase">Ekspor</span>
             </button>
             {showDownloadMenu && (
@@ -366,16 +411,36 @@ export function EditorView({ imageData, onBack }: EditorViewProps) {
         {/* Canvas Section */}
         <section id="tour-render-stream" className="flex-1 lg:col-span-8 lg:row-span-4 bg-black lg:border-[4px] lg:border-black lg:shadow-[8px_8px_0px_0px_rgba(0,0,0,1)] relative flex items-center justify-center overflow-hidden">
           <div className="w-full h-full flex items-center justify-center bg-[radial-gradient(circle,_#333_1px,_transparent_1px)] [background-size:20px_20px] p-4 pb-20 sm:pb-24 lg:pb-4 lg:p-8">
-            <div 
-              className="max-w-full max-h-full h-full border-4 border-black lg:border-2 lg:border-white/20 relative flex items-center justify-center bg-zinc-900 shadow-[8px_8px_0px_0px_rgba(0,0,0,1)] lg:shadow-none"
-              style={{ aspectRatio: `${currentBaseImage.width} / ${currentBaseImage.height}` }}
+            <TransformWrapper
+              disabled={isCropping}
+              initialScale={1}
+              minScale={0.1}
+              maxScale={8}
+              centerOnInit={true}
+              wheel={{ step: 0.1 }}
             >
-              <canvas 
-                ref={canvasRef} 
-                className="w-full h-full object-contain relative z-10"
-              />
-              {isCropping && <CropOverlay onCrop={handleCrop} onCancel={() => setIsCropping(false)} />}
-            </div>
+              {({ zoomIn, zoomOut, resetTransform }) => (
+                <React.Fragment>
+                  <div className="absolute top-4 left-4 z-20 flex gap-2">
+                    <button onClick={() => zoomIn()} className="bg-white/80 p-2 border-2 border-black hover:bg-white text-black font-black shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] active:translate-y-[1px] active:translate-x-[1px] active:shadow-none leading-none w-8 h-8 flex items-center justify-center" title="Zoom In">+</button>
+                    <button onClick={() => zoomOut()} className="bg-white/80 p-2 border-2 border-black hover:bg-white text-black font-black shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] active:translate-y-[1px] active:translate-x-[1px] active:shadow-none leading-none w-8 h-8 flex items-center justify-center" title="Zoom Out">-</button>
+                    <button onClick={() => resetTransform()} className="bg-white/80 px-2 py-1 border-2 border-black hover:bg-white text-black font-black text-[10px] shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] active:translate-y-[1px] active:translate-x-[1px] active:shadow-none leading-none h-8 flex items-center justify-center uppercase" title="Reset Zoom">Fit</button>
+                  </div>
+                  <TransformComponent wrapperStyle={{ width: '100%', height: '100%' }} contentStyle={{ width: '100%', height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                    <div 
+                      className="max-w-full max-h-full h-full border-4 border-black lg:border-2 lg:border-white/20 relative flex items-center justify-center bg-zinc-900 shadow-[8px_8px_0px_0px_rgba(0,0,0,1)] lg:shadow-none"
+                      style={{ aspectRatio: `${currentBaseImage.width} / ${currentBaseImage.height}` }}
+                    >
+                      <canvas 
+                        ref={canvasRef} 
+                        className="w-full h-full object-contain relative z-10"
+                      />
+                      {isCropping && <CropOverlay onCrop={handleCrop} onCancel={() => setIsCropping(false)} />}
+                    </div>
+                  </TransformComponent>
+                </React.Fragment>
+              )}
+            </TransformWrapper>
           </div>
         </section>
 
@@ -383,15 +448,15 @@ export function EditorView({ imageData, onBack }: EditorViewProps) {
         <section id={isDesktop ? "tour-pipeline" : undefined} className="hidden lg:flex lg:col-span-4 lg:row-span-4 bg-white border-[4px] border-black p-4 shadow-[8px_8px_0px_0px_rgba(0,0,0,1)] flex-col shrink-0">
           <h2 className="font-black text-xl mb-4 border-b-2 border-black pb-2 uppercase">Pengaturan</h2>
           <div className="space-y-6 flex-1 overflow-y-auto pr-2 pb-12 no-scrollbar">
-            <Slider icon={Sun} label="KECERAHAN" value={settings.brightness} defaultValue={0} min={-1} max={1} step={0.01} onChange={(v) => handleSliderChange('brightness', v)} />
-            <Slider icon={Contrast} label="KONTRAS" value={settings.contrast} defaultValue={1} min={0} max={3} step={0.01} onChange={(v) => handleSliderChange('contrast', v)} />
-            <Slider icon={Droplet} label="SATURASI" value={settings.saturation} defaultValue={1} min={0} max={3} step={0.01} onChange={(v) => handleSliderChange('saturation', v)} />
-            <Slider icon={Palette} label="WARNA (HUE)" value={settings.hue} defaultValue={0} min={-1} max={1} step={0.01} onChange={(v) => handleSliderChange('hue', v)} />
-            <Slider icon={Thermometer} label="SUHU" value={settings.temperature || 0} defaultValue={0} min={-1} max={1} step={0.01} onChange={(v) => handleSliderChange('temperature', v)} />
-            <Slider icon={Focus} label="KETAJAMAN" value={settings.sharpness} defaultValue={0} min={-1} max={5} step={0.1} onChange={(v) => handleSliderChange('sharpness', v)} />
-            <Slider icon={Droplets} label="BLUR" value={settings.blur || 0} defaultValue={0} min={0} max={1} step={0.01} onChange={(v) => handleSliderChange('blur', v)} />
-            <Slider icon={Aperture} label="VIGNETTE" value={settings.vignette || 0} defaultValue={0} min={0} max={1} step={0.01} onChange={(v) => handleSliderChange('vignette', v)} />
-            <Slider icon={Sparkles} label="GRAIN" value={settings.grain || 0} defaultValue={0} min={0} max={1} step={0.01} onChange={(v) => handleSliderChange('grain', v)} />
+            <Slider icon={Sun} label="KECERAHAN" value={settings.brightness} defaultValue={0} min={-1} max={1} step={0.01} name="brightness" onChange={handleSliderChange} />
+            <Slider icon={Contrast} label="KONTRAS" value={settings.contrast} defaultValue={1} min={0} max={3} step={0.01} name="contrast" onChange={handleSliderChange} />
+            <Slider icon={Droplet} label="SATURASI" value={settings.saturation} defaultValue={1} min={0} max={3} step={0.01} name="saturation" onChange={handleSliderChange} />
+            <Slider icon={Palette} label="WARNA (HUE)" value={settings.hue} defaultValue={0} min={-1} max={1} step={0.01} name="hue" onChange={handleSliderChange} />
+            <Slider icon={Thermometer} label="SUHU" value={settings.temperature || 0} defaultValue={0} min={-1} max={1} step={0.01} name="temperature" onChange={handleSliderChange} />
+            <Slider icon={Focus} label="KETAJAMAN" value={settings.sharpness} defaultValue={0} min={-1} max={5} step={0.1} name="sharpness" onChange={handleSliderChange} />
+            <Slider icon={Droplets} label="BLUR" value={settings.blur || 0} defaultValue={0} min={0} max={1} step={0.01} name="blur" onChange={handleSliderChange} />
+            <Slider icon={Aperture} label="VIGNETTE" value={settings.vignette || 0} defaultValue={0} min={0} max={1} step={0.01} name="vignette" onChange={handleSliderChange} />
+            <Slider icon={Sparkles} label="GRAIN" value={settings.grain || 0} defaultValue={0} min={0} max={1} step={0.01} name="grain" onChange={handleSliderChange} />
           </div>
           <div className="mt-4 flex flex-col gap-2 shrink-0">
             <div className="flex gap-2">
@@ -440,7 +505,7 @@ export function EditorView({ imageData, onBack }: EditorViewProps) {
               return (
               <button 
                 key={i}
-                onClick={() => setSettings(f.settings)}
+                onClick={() => handleSelectPreset(f.settings)}
                 className={`relative flex-shrink-0 ${desktopThumbClass} border-[3px] border-black flex flex-col justify-end hover:brightness-95 transition-all text-left group active:bg-zinc-300 overflow-hidden ${isActive ? 'translate-x-[2px] translate-y-[2px] shadow-none outline outline-4 outline-offset-2 outline-black bg-zinc-300' : 'shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] hover:translate-x-[2px] hover:translate-y-[2px] hover:shadow-none bg-white'}`}
               >
                 {thumbnailUrl && (
@@ -457,7 +522,7 @@ export function EditorView({ imageData, onBack }: EditorViewProps) {
               return (
               <div key={'custom_desk_'+i} className={`relative flex-shrink-0 ${desktopThumbClass}`}>
                 <button 
-                  onClick={() => setSettings(f.settings)}
+                  onClick={() => handleSelectPreset(f.settings)}
                   className={`w-full h-full border-[3px] border-black border-dashed flex flex-col justify-end transition-all text-left group overflow-hidden ${isActive ? 'translate-x-[2px] translate-y-[2px] shadow-none outline outline-4 outline-offset-2 outline-black bg-cyan-300' : 'shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] hover:translate-x-[2px] hover:translate-y-[2px] hover:shadow-none bg-cyan-100'}`}
                 >
                   {thumbnailUrl && (
@@ -490,7 +555,7 @@ export function EditorView({ imageData, onBack }: EditorViewProps) {
           <h3 className="font-black uppercase text-sm sm:text-base ml-2">
             {activeDrawer === 'PRESETS' ? 'Filter' : activeDrawer === 'ADJUST' ? 'Atur' : 'Info Render'}
           </h3>
-          <button onClick={() => setActiveDrawer(null)} className="p-1 hover:bg-gray-200 border-2 border-transparent hover:border-black transition-colors"><X size={20}/></button>
+          <button onClick={() => { vibrate(10); setActiveDrawer(null); }} className="p-1 hover:bg-gray-200 border-2 border-transparent hover:border-black transition-colors"><X size={20}/></button>
         </div>
         
         <div className="flex-1 overflow-y-auto p-4 bg-gray-50">
@@ -501,7 +566,7 @@ export function EditorView({ imageData, onBack }: EditorViewProps) {
                 return (
                 <button 
                   key={i}
-                  onClick={() => setSettings(f.settings)}
+                  onClick={() => handleSelectPreset(f.settings)}
                   className={`relative ${mobileThumbClass} border-[3px] border-black flex items-center justify-center hover:brightness-95 transition-all text-center group active:bg-zinc-300 overflow-hidden ${isActive ? 'translate-x-[2px] translate-y-[2px] shadow-none outline outline-4 outline-offset-2 outline-black bg-zinc-300' : 'shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] hover:translate-x-[2px] hover:translate-y-[2px] hover:shadow-none bg-white'}`}
                 >
                   {thumbnailUrl && (
@@ -518,7 +583,7 @@ export function EditorView({ imageData, onBack }: EditorViewProps) {
                 return (
                 <div key={'custom_'+i} className={`relative ${mobileThumbClass}`}>
                   <button 
-                    onClick={() => setSettings(f.settings)}
+                    onClick={() => handleSelectPreset(f.settings)}
                     className={`w-full h-full border-[3px] border-black flex items-center justify-center transition-all text-center group overflow-hidden ${isActive ? 'translate-x-[2px] translate-y-[2px] shadow-none outline outline-4 outline-offset-2 outline-black bg-cyan-300' : 'shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] hover:translate-x-[2px] hover:translate-y-[2px] hover:shadow-none bg-cyan-100'}`}
                   >
                     {thumbnailUrl && (
@@ -541,15 +606,15 @@ export function EditorView({ imageData, onBack }: EditorViewProps) {
 
           {activeDrawer === 'ADJUST' && (
             <div className="flex flex-col gap-5 pb-24 max-w-xl mx-auto">
-              <Slider icon={Sun} label="KECERAHAN" value={settings.brightness} defaultValue={0} min={-1} max={1} step={0.01} onChange={(v) => handleSliderChange('brightness', v)} />
-              <Slider icon={Contrast} label="KONTRAS" value={settings.contrast} defaultValue={1} min={0} max={3} step={0.01} onChange={(v) => handleSliderChange('contrast', v)} />
-              <Slider icon={Droplet} label="SATURASI" value={settings.saturation} defaultValue={1} min={0} max={3} step={0.01} onChange={(v) => handleSliderChange('saturation', v)} />
-              <Slider icon={Palette} label="WARNA (HUE)" value={settings.hue} defaultValue={0} min={-1} max={1} step={0.01} onChange={(v) => handleSliderChange('hue', v)} />
-              <Slider icon={Thermometer} label="SUHU" value={settings.temperature || 0} defaultValue={0} min={-1} max={1} step={0.01} onChange={(v) => handleSliderChange('temperature', v)} />
-              <Slider icon={Focus} label="KETAJAMAN" value={settings.sharpness} defaultValue={0} min={-1} max={5} step={0.1} onChange={(v) => handleSliderChange('sharpness', v)} />
-              <Slider icon={Droplets} label="BLUR" value={settings.blur || 0} defaultValue={0} min={0} max={1} step={0.01} onChange={(v) => handleSliderChange('blur', v)} />
-              <Slider icon={Aperture} label="VIGNETTE" value={settings.vignette || 0} defaultValue={0} min={0} max={1} step={0.01} onChange={(v) => handleSliderChange('vignette', v)} />
-              <Slider icon={Sparkles} label="GRAIN" value={settings.grain || 0} defaultValue={0} min={0} max={1} step={0.01} onChange={(v) => handleSliderChange('grain', v)} />
+              <Slider icon={Sun} label="KECERAHAN" value={settings.brightness} defaultValue={0} min={-1} max={1} step={0.01} name="brightness" onChange={handleSliderChange} />
+              <Slider icon={Contrast} label="KONTRAS" value={settings.contrast} defaultValue={1} min={0} max={3} step={0.01} name="contrast" onChange={handleSliderChange} />
+              <Slider icon={Droplet} label="SATURASI" value={settings.saturation} defaultValue={1} min={0} max={3} step={0.01} name="saturation" onChange={handleSliderChange} />
+              <Slider icon={Palette} label="WARNA (HUE)" value={settings.hue} defaultValue={0} min={-1} max={1} step={0.01} name="hue" onChange={handleSliderChange} />
+              <Slider icon={Thermometer} label="SUHU" value={settings.temperature || 0} defaultValue={0} min={-1} max={1} step={0.01} name="temperature" onChange={handleSliderChange} />
+              <Slider icon={Focus} label="KETAJAMAN" value={settings.sharpness} defaultValue={0} min={-1} max={5} step={0.1} name="sharpness" onChange={handleSliderChange} />
+              <Slider icon={Droplets} label="BLUR" value={settings.blur || 0} defaultValue={0} min={0} max={1} step={0.01} name="blur" onChange={handleSliderChange} />
+              <Slider icon={Aperture} label="VIGNETTE" value={settings.vignette || 0} defaultValue={0} min={0} max={1} step={0.01} name="vignette" onChange={handleSliderChange} />
+              <Slider icon={Sparkles} label="GRAIN" value={settings.grain || 0} defaultValue={0} min={0} max={1} step={0.01} name="grain" onChange={handleSliderChange} />
               <div className="mt-4 flex flex-col gap-2 shrink-0">
                 <div className="flex gap-2">
                   <button onClick={handleUndo} disabled={historyIndex <= 0} className="flex-1 bg-yellow-400 text-black border-2 border-black py-3 font-black shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] hover:bg-yellow-500 transition-colors uppercase text-sm active:translate-y-[2px] active:translate-x-[2px] active:shadow-none disabled:opacity-50 disabled:pointer-events-none cursor-pointer disabled:cursor-not-allowed flex items-center justify-center gap-1.5"><Undo size={16} />UNDO</button>
@@ -591,16 +656,16 @@ export function EditorView({ imageData, onBack }: EditorViewProps) {
 
       {/* Mobile: Bottom Action Bar */}
       <footer className="lg:hidden absolute bottom-0 w-full bg-white border-t-[4px] border-black p-2 sm:p-3 flex gap-2 shrink-0 z-30 shadow-[0_-4px_0_0_rgba(0,0,0,1)]">
-        <button id={!isDesktop ? "tour-presets" : undefined} onClick={() => setActiveDrawer(activeDrawer === 'PRESETS' ? null : 'PRESETS')} className={`flex-1 border-[3px] border-black py-1 sm:py-2 font-black text-[10px] sm:text-xs flex flex-col items-center justify-center gap-1 shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] active:translate-y-[2px] active:translate-x-[2px] active:shadow-none transition-all ${activeDrawer === 'PRESETS' ? 'bg-cyan-400 translate-y-[2px] translate-x-[2px] shadow-none' : 'bg-white hover:bg-gray-100'}`}>
+        <button id={!isDesktop ? "tour-presets" : undefined} onClick={() => handleToggleDrawer('PRESETS')} className={`flex-1 border-[3px] border-black py-1 sm:py-2 font-black text-[10px] sm:text-xs flex flex-col items-center justify-center gap-1 shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] active:translate-y-[2px] active:translate-x-[2px] active:shadow-none transition-all ${activeDrawer === 'PRESETS' ? 'bg-cyan-400 translate-y-[2px] translate-x-[2px] shadow-none' : 'bg-white hover:bg-gray-100'}`}>
           <ImageIcon size={20} /> <span className="uppercase">Filter</span>
         </button>
-        <button id={!isDesktop ? "tour-pipeline" : undefined} onClick={() => setActiveDrawer(activeDrawer === 'ADJUST' ? null : 'ADJUST')} className={`flex-1 border-[3px] border-black py-1 sm:py-2 font-black text-[10px] sm:text-xs flex flex-col items-center justify-center gap-1 shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] active:translate-y-[2px] active:translate-x-[2px] active:shadow-none transition-all ${activeDrawer === 'ADJUST' ? 'bg-pink-400 translate-y-[2px] translate-x-[2px] shadow-none' : 'bg-white hover:bg-gray-100'}`}>
+        <button id={!isDesktop ? "tour-pipeline" : undefined} onClick={() => handleToggleDrawer('ADJUST')} className={`flex-1 border-[3px] border-black py-1 sm:py-2 font-black text-[10px] sm:text-xs flex flex-col items-center justify-center gap-1 shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] active:translate-y-[2px] active:translate-x-[2px] active:shadow-none transition-all ${activeDrawer === 'ADJUST' ? 'bg-pink-400 translate-y-[2px] translate-x-[2px] shadow-none' : 'bg-white hover:bg-gray-100'}`}>
           <SlidersHorizontal size={20} /> <span className="uppercase">Atur</span>
         </button>
-        <button id={!isDesktop ? "tour-stats" : undefined} onClick={() => setActiveDrawer(activeDrawer === 'STATS' ? null : 'STATS')} className={`flex-1 border-[3px] border-black py-1 sm:py-2 font-black text-[10px] sm:text-xs flex flex-col items-center justify-center gap-1 shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] active:translate-y-[2px] active:translate-x-[2px] active:shadow-none transition-all ${activeDrawer === 'STATS' ? 'bg-blue-400 translate-y-[2px] translate-x-[2px] shadow-none' : 'bg-white hover:bg-gray-100'}`}>
+        <button id={!isDesktop ? "tour-stats" : undefined} onClick={() => handleToggleDrawer('STATS')} className={`flex-1 border-[3px] border-black py-1 sm:py-2 font-black text-[10px] sm:text-xs flex flex-col items-center justify-center gap-1 shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] active:translate-y-[2px] active:translate-x-[2px] active:shadow-none transition-all ${activeDrawer === 'STATS' ? 'bg-blue-400 translate-y-[2px] translate-x-[2px] shadow-none' : 'bg-white hover:bg-gray-100'}`}>
           <Activity size={20} /> <span className="uppercase">Info</span>
         </button>
-        <button id={!isDesktop ? "tour-histogram" : undefined} onClick={() => setActiveDrawer(activeDrawer === 'HISTOGRAM' ? null : 'HISTOGRAM')} className={`flex-1 border-[3px] border-black py-1 sm:py-2 font-black text-[10px] sm:text-xs flex flex-col items-center justify-center gap-1 shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] active:translate-y-[2px] active:translate-x-[2px] active:shadow-none transition-all ${activeDrawer === 'HISTOGRAM' ? 'bg-purple-400 translate-y-[2px] translate-x-[2px] shadow-none' : 'bg-white hover:bg-gray-100'}`}>
+        <button id={!isDesktop ? "tour-histogram" : undefined} onClick={() => handleToggleDrawer('HISTOGRAM')} className={`flex-1 border-[3px] border-black py-1 sm:py-2 font-black text-[10px] sm:text-xs flex flex-col items-center justify-center gap-1 shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] active:translate-y-[2px] active:translate-x-[2px] active:shadow-none transition-all ${activeDrawer === 'HISTOGRAM' ? 'bg-purple-400 translate-y-[2px] translate-x-[2px] shadow-none' : 'bg-white hover:bg-gray-100'}`}>
           <BarChart2 size={20} /> <span className="uppercase">Grafik</span>
         </button>
       </footer>
@@ -648,40 +713,3 @@ export function EditorView({ imageData, onBack }: EditorViewProps) {
   );
 }
 
-function Slider({ label, icon: Icon, value, min, max, step, defaultValue, onChange }: { label: string, icon?: React.ElementType, value: number, min: number, max: number, step: number, defaultValue: number, onChange: (v: number) => void }) {
-  const isModified = Math.abs(value - defaultValue) > 0.001;
-
-  return (
-    <div className="flex flex-col gap-2">
-      <div className="flex justify-between items-center font-black text-xs sm:text-sm uppercase">
-        <span className="flex items-center gap-2">
-          {Icon && <Icon size={16} />}
-          {label}
-          {isModified && (
-            <button 
-              onClick={() => onChange(defaultValue)}
-              className="text-[10px] bg-red-500 text-white px-1.5 py-0.5 hover:bg-red-600 transition-colors border border-black shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] active:translate-y-[1px] active:translate-x-[1px] active:shadow-none"
-              title="Reset to default"
-            >
-              RESET
-            </button>
-          )}
-        </span>
-        <span className="bg-black text-white px-2 py-0.5">{value.toFixed(2)}</span>
-      </div>
-      <input 
-        type="range" 
-        min={min} 
-        max={max} 
-        step={step} 
-        value={value} 
-        onDoubleClick={() => onChange(defaultValue)}
-        onChange={(e) => onChange(parseFloat(e.target.value))}
-        className="w-full h-6 bg-white border-[3px] border-black appearance-none cursor-pointer accent-black"
-        style={{
-          boxShadow: 'inset 4px 4px 0px rgba(0,0,0,0.1)'
-        }}
-      />
-    </div>
-  );
-}

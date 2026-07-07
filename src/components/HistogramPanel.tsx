@@ -13,7 +13,7 @@ interface HistogramPanelProps {
   data: HistogramData | null;
 }
 
-export function HistogramPanel({ data }: HistogramPanelProps) {
+export const HistogramPanel = React.memo(function HistogramPanel({ data }: HistogramPanelProps) {
   if (!data || !data.l || data.l.length === 0) return null;
 
   const width = 100;
@@ -74,4 +74,4 @@ export function HistogramPanel({ data }: HistogramPanelProps) {
       </div>
     </div>
   );
-}
+});
