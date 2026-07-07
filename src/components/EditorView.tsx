@@ -1,10 +1,11 @@
 import React, { useEffect, useRef, useState, useCallback } from 'react';
 import { WebGLFilterEngine } from '../lib/webgl';
 import { FilterSettings, CustomFilter } from '../types';
-import { Download, Save, Share2, ChevronLeft, Image as ImageIcon, SlidersHorizontal, Activity, X, Trash2, BarChart2, Undo, Redo, Sun, Contrast, Droplet, Palette, Thermometer, Focus, Droplets, Aperture, Sparkles } from 'lucide-react';
+import { Download, Save, Share2, ChevronLeft, Image as ImageIcon, SlidersHorizontal, Activity, X, Trash2, BarChart2, Crop, Undo, Redo, Sun, Contrast, Droplet, Palette, Thermometer, Focus, Droplets, Aperture, Sparkles } from 'lucide-react';
 import { db } from '../lib/db';
 import { calculateHistogram } from '../lib/imageUtils';
 import { HistogramPanel, HistogramData } from './HistogramPanel';
+import { CropOverlay } from './CropOverlay';
 
 interface EditorViewProps {
   imageData: ImageData;
@@ -52,6 +53,10 @@ const isSettingsEqual = (a: FilterSettings, b: FilterSettings) => {
 export function EditorView({ imageData, onBack }: EditorViewProps) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const engineRef = useRef<WebGLFilterEngine | null>(null);
+  
+  const [baseImageHistory, setBaseImageHistory] = useState<ImageData[]>([imageData]);
+  const [isCropping, setIsCropping] = useState(false);
+  
   const [settingsHistory, setSettingsHistory] = useState<FilterSettings[]>([BUILT_IN_FILTERS[0].settings]);
   const [historyIndex, setHistoryIndex] = useState(0);
   const isUndoRedoRef = useRef(false);
@@ -69,15 +74,18 @@ export function EditorView({ imageData, onBack }: EditorViewProps) {
   const [renderTime, setRenderTime] = useState(0);
   const [histogram, setHistogram] = useState<HistogramData | null>(null);
 
-  const isPortrait = imageData.height > imageData.width;
+  // Get current base image from history
+  const currentBaseImage = baseImageHistory[baseImageHistory.length - 1];
+
+  const isPortrait = currentBaseImage.height > currentBaseImage.width;
   const desktopThumbClass = isPortrait ? "w-24 h-32" : "w-32 h-24";
   const mobileThumbClass = isPortrait ? "aspect-[3/4]" : "aspect-[4/3]";
 
   useEffect(() => {
     const timeout = setTimeout(() => {
-      const scale = Math.min(400 / imageData.width, 400 / imageData.height);
-      const w = Math.floor(imageData.width * scale) || 1;
-      const h = Math.floor(imageData.height * scale) || 1;
+      const scale = Math.min(400 / currentBaseImage.width, 400 / currentBaseImage.height);
+      const w = Math.floor(currentBaseImage.width * scale) || 1;
+      const h = Math.floor(currentBaseImage.height * scale) || 1;
       
       const thumbCanvas2d = document.createElement('canvas');
       thumbCanvas2d.width = w;
@@ -86,15 +94,15 @@ export function EditorView({ imageData, onBack }: EditorViewProps) {
       if (!ctx) return;
       
       const offCanvas = document.createElement('canvas');
-      offCanvas.width = imageData.width;
-      offCanvas.height = imageData.height;
-      offCanvas.getContext('2d')?.putImageData(imageData, 0, 0);
+      offCanvas.width = currentBaseImage.width;
+      offCanvas.height = currentBaseImage.height;
+      offCanvas.getContext('2d')?.putImageData(currentBaseImage, 0, 0);
       ctx.drawImage(offCanvas, 0, 0, w, h);
       
       setThumbnailUrl(thumbCanvas2d.toDataURL('image/jpeg', 0.8));
     }, 100);
     return () => clearTimeout(timeout);
-  }, [imageData]);
+  }, [currentBaseImage]);
 
   useEffect(() => {
     const check = () => setIsDesktop(window.innerWidth >= 1024);
@@ -173,6 +181,60 @@ export function EditorView({ imageData, onBack }: EditorViewProps) {
 
   const handleSliderChange = (key: keyof FilterSettings, value: number) => {
     setSettings(prev => ({ ...prev, [key]: value }));
+  };
+
+  const handleCrop = (cropBox: { x: number; y: number; width: number; height: number }) => {
+    if (!engineRef.current) return;
+    const currentImageData = engineRef.current.getImageData();
+    if (!currentImageData) return;
+    
+    const cropCanvas = document.createElement('canvas');
+    const cropCtx = cropCanvas.getContext('2d');
+    if (!cropCtx) return;
+    
+    // Original dimensions
+    const origW = currentImageData.width;
+    const origH = currentImageData.height;
+    
+    // Pixel coordinates
+    const px = Math.floor(cropBox.x * origW);
+    const py = Math.floor(cropBox.y * origH);
+    const pw = Math.floor(cropBox.width * origW);
+    const ph = Math.floor(cropBox.height * origH);
+    
+    if (pw === 0 || ph === 0) {
+      setIsCropping(false);
+      return;
+    }
+    
+    cropCanvas.width = pw;
+    cropCanvas.height = ph;
+    
+    const offCanvas = document.createElement('canvas');
+    offCanvas.width = origW;
+    offCanvas.height = origH;
+    offCanvas.getContext('2d')?.putImageData(currentImageData, 0, 0);
+    
+    cropCtx.drawImage(offCanvas, px, py, pw, ph, 0, 0, pw, ph);
+    const croppedImageData = cropCtx.getImageData(0, 0, pw, ph);
+    
+    setBaseImageHistory(prev => [...prev, croppedImageData]);
+    
+    if (canvasRef.current) {
+      canvasRef.current.width = pw;
+      canvasRef.current.height = ph;
+    }
+    
+    engineRef.current.setImage(croppedImageData);
+    const defaultSettings = { ...BUILT_IN_FILTERS[0].settings };
+    setSettings(defaultSettings);
+    setSettingsHistory([defaultSettings]);
+    setHistoryIndex(0);
+    engineRef.current.render(defaultSettings);
+    
+    setIsCropping(false);
+    setToastMessage('Crop berhasil!');
+    setTimeout(() => setToastMessage(null), 3000);
   };
 
   const handleUndo = () => {
@@ -260,6 +322,27 @@ export function EditorView({ imageData, onBack }: EditorViewProps) {
         </button>
         <div className="flex gap-2 h-full items-stretch" id="tour-actions">
           <div className="relative flex">
+            {baseImageHistory.length > 1 && (
+              <button onClick={() => {
+                const newHistory = [...baseImageHistory];
+                newHistory.pop();
+                setBaseImageHistory(newHistory);
+                const prevImage = newHistory[newHistory.length - 1];
+                if (canvasRef.current) {
+                  canvasRef.current.width = prevImage.width;
+                  canvasRef.current.height = prevImage.height;
+                }
+                if (engineRef.current) {
+                  engineRef.current.setImage(prevImage);
+                  engineRef.current.render(settings);
+                }
+              }} className="bg-orange-400 border-[3px] border-black px-2 sm:px-3 py-1 sm:py-2 font-bold shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] hover:translate-x-[2px] hover:translate-y-[2px] hover:shadow-none transition-all flex items-center justify-center gap-2 mr-2" title="Undo Crop">
+                 <Undo size={18} />
+              </button>
+            )}
+            <button onClick={() => setIsCropping(!isCropping)} className={`border-[3px] border-black px-2 sm:px-3 py-1 sm:py-2 font-bold shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] hover:translate-x-[2px] hover:translate-y-[2px] hover:shadow-none transition-all flex items-center justify-center gap-2 mr-2 ${isCropping ? 'bg-blue-300 translate-x-[2px] translate-y-[2px] shadow-none' : 'bg-blue-400'}`}>
+               <Crop size={18} /> <span className="hidden sm:inline uppercase">Potong</span>
+            </button>
             <button onClick={() => setShowDownloadMenu(!showDownloadMenu)} className="bg-green-400 border-[3px] border-black px-2 sm:px-3 py-1 sm:py-2 font-bold shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] hover:translate-x-[2px] hover:translate-y-[2px] hover:shadow-none transition-all flex items-center justify-center gap-2">
                <Download size={18} /> <span className="hidden sm:inline uppercase">Ekspor</span>
             </button>
@@ -283,11 +366,15 @@ export function EditorView({ imageData, onBack }: EditorViewProps) {
         {/* Canvas Section */}
         <section id="tour-render-stream" className="flex-1 lg:col-span-8 lg:row-span-4 bg-black lg:border-[4px] lg:border-black lg:shadow-[8px_8px_0px_0px_rgba(0,0,0,1)] relative flex items-center justify-center overflow-hidden">
           <div className="w-full h-full flex items-center justify-center bg-[radial-gradient(circle,_#333_1px,_transparent_1px)] [background-size:20px_20px] p-4 pb-20 sm:pb-24 lg:pb-4 lg:p-8">
-            <div className="w-full h-full border-4 border-black lg:border-2 lg:border-white/20 relative flex items-center justify-center bg-zinc-900 shadow-[8px_8px_0px_0px_rgba(0,0,0,1)] lg:shadow-none">
+            <div 
+              className="max-w-full max-h-full h-full border-4 border-black lg:border-2 lg:border-white/20 relative flex items-center justify-center bg-zinc-900 shadow-[8px_8px_0px_0px_rgba(0,0,0,1)] lg:shadow-none"
+              style={{ aspectRatio: `${currentBaseImage.width} / ${currentBaseImage.height}` }}
+            >
               <canvas 
                 ref={canvasRef} 
-                className="max-w-full max-h-full object-contain relative z-10"
+                className="w-full h-full object-contain relative z-10"
               />
+              {isCropping && <CropOverlay onCrop={handleCrop} onCancel={() => setIsCropping(false)} />}
             </div>
           </div>
         </section>
