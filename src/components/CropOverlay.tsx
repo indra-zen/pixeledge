@@ -86,20 +86,17 @@ export function CropOverlay({ onCrop, onCancel }: CropOverlayProps) {
       
       {/* Controls */}
       <div 
-        className="absolute top-4 right-4 flex gap-2 pointer-events-auto"
-        onPointerDown={(e) => e.stopPropagation()}
-        onPointerMove={(e) => e.stopPropagation()}
-        onPointerUp={(e) => e.stopPropagation()}
+        className="absolute top-4 right-4 flex gap-2 pointer-events-auto z-30"
       >
         <button 
-          onClick={onCancel}
+          onPointerDown={(e) => { e.stopPropagation(); onCancel(); }}
           className="bg-red-500 text-white p-2 border-2 border-black shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] hover:translate-x-[1px] hover:translate-y-[1px] hover:shadow-none transition-all"
         >
           <X size={20} />
         </button>
         {hasSelection && (
           <button 
-            onClick={handleConfirm}
+            onPointerDown={(e) => { e.stopPropagation(); handleConfirm(); }}
             className="bg-green-400 text-black p-2 border-2 border-black shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] hover:translate-x-[1px] hover:translate-y-[1px] hover:shadow-none transition-all"
           >
             <Check size={20} />

@@ -403,15 +403,22 @@ export function EditorView({ imageData, onBack }: EditorViewProps) {
         </section>
 
         {/* Desktop: Stats */}
-        <section id={isDesktop ? "tour-stats" : undefined} className="hidden lg:flex lg:col-span-2 lg:row-span-2 bg-blue-400 border-[4px] border-black p-4 shadow-[8px_8px_0px_0px_rgba(0,0,0,1)] flex-col shrink-0 min-h-0">
+        <section id={isDesktop ? "tour-stats" : undefined} className="hidden lg:flex lg:col-span-3 lg:row-span-2 bg-blue-400 border-[4px] border-black p-4 shadow-[8px_8px_0px_0px_rgba(0,0,0,1)] flex-col shrink-0 min-h-0">
           <h2 className="font-black text-lg mb-4 uppercase">INFO</h2>
           <div className="flex-1 flex flex-col justify-end">
             <div className="text-[10px] space-y-1.5 font-bold bg-white/50 p-2 border-2 border-black">
-              <div className="flex justify-between border-b border-black/10 pb-1"><span>WAKTU RENDER:</span><span>{renderTime.toFixed(2)}ms</span></div>
-              <div className="flex justify-between border-b border-black/10 pb-1"><span>RESOLUSI:</span><span>{imageData.width}x{imageData.height}</span></div>
-              <div className="flex justify-between border-b border-black/10 pb-1"><span>RASIO:</span><span>{(imageData.width/imageData.height).toFixed(2)}:1</span></div>
-              <div className="flex justify-between border-b border-black/10 pb-1"><span>PIKSEL:</span><span>{(imageData.width * imageData.height).toLocaleString()}</span></div>
-              <div className="flex justify-between"><span>WARNA:</span><span>RGBA</span></div>
+              <div className="flex justify-between gap-2 border-b border-black/10 pb-1"><span className="shrink-0 text-black/60">RENDER:</span><span className="text-right truncate">{renderTime.toFixed(2)}ms</span></div>
+              <div className="flex justify-between gap-2 border-b border-black/10 pb-1"><span className="shrink-0 text-black/60">RESOLUSI:</span><span className="text-right truncate">{currentBaseImage.width}x{currentBaseImage.height}</span></div>
+              <div className="flex justify-between gap-2 border-b border-black/10 pb-1"><span className="shrink-0 text-black/60">RASIO:</span><span className="text-right truncate">{(currentBaseImage.width/currentBaseImage.height).toFixed(2)}:1</span></div>
+              <div className="flex justify-between gap-2 border-b border-black/10 pb-1"><span className="shrink-0 text-black/60">PIKSEL:</span><span className="text-right truncate">{(currentBaseImage.width * currentBaseImage.height).toLocaleString()}</span></div>
+              {histogram?.stats && (
+                <>
+                  <div className="flex justify-between gap-2 border-b border-black/10 pb-1"><span className="shrink-0 text-black/60">LUMA AVG:</span><span className="text-right truncate">{histogram.stats.meanLuminance.toFixed(1)}</span></div>
+                  <div className="flex justify-between gap-2 border-b border-black/10 pb-1"><span className="shrink-0 text-black/60">KONTRAS:</span><span className="text-right truncate">{histogram.stats.contrast.toFixed(1)}</span></div>
+                  <div className="flex justify-between gap-2 border-b border-black/10 pb-1"><span className="shrink-0 text-black/60">RGB AVG:</span><span className="text-right truncate">{Math.round(histogram.stats.avgR)}, {Math.round(histogram.stats.avgG)}, {Math.round(histogram.stats.avgB)}</span></div>
+                </>
+              )}
+              <div className="flex justify-between gap-2"><span className="shrink-0 text-black/60">WARNA:</span><span className="text-right truncate">RGBA</span></div>
             </div>
           </div>
         </section>
@@ -425,7 +432,7 @@ export function EditorView({ imageData, onBack }: EditorViewProps) {
         </section>
 
         {/* Desktop: Built-in Filters */}
-        <section id={isDesktop ? "tour-presets" : undefined} className="hidden lg:flex lg:col-span-7 lg:row-span-2 bg-white border-[4px] border-black p-4 shadow-[8px_8px_0px_0px_rgba(0,0,0,1)] flex-col shrink-0 min-h-0">
+        <section id={isDesktop ? "tour-presets" : undefined} className="hidden lg:flex lg:col-span-6 lg:row-span-2 bg-white border-[4px] border-black p-4 shadow-[8px_8px_0px_0px_rgba(0,0,0,1)] flex-col shrink-0 min-h-0">
           <h3 className="font-bold text-sm mb-2 uppercase">FILTER</h3>
           <div className="flex gap-4 overflow-x-auto pb-2 flex-1 items-center no-scrollbar">
             {BUILT_IN_FILTERS.map((f, i) => {
@@ -556,11 +563,18 @@ export function EditorView({ imageData, onBack }: EditorViewProps) {
           {activeDrawer === 'STATS' && (
             <div className="flex flex-col gap-4 max-w-xl mx-auto h-full justify-start">
               <div className="text-[10px] sm:text-xs space-y-2 font-bold bg-blue-100 p-3 border-[3px] border-black shadow-[4px_4px_0px_0px_rgba(0,0,0,1)]">
-                <div className="flex justify-between border-b-2 border-black/20 pb-1"><span>WAKTU RENDER:</span><span>{renderTime.toFixed(2)}ms</span></div>
-                <div className="flex justify-between border-b-2 border-black/20 pb-1"><span>RESOLUSI:</span><span>{imageData.width}x{imageData.height}</span></div>
-                <div className="flex justify-between border-b-2 border-black/20 pb-1"><span>RASIO:</span><span>{(imageData.width/imageData.height).toFixed(2)}:1</span></div>
-                <div className="flex justify-between border-b-2 border-black/20 pb-1"><span>PIKSEL:</span><span>{(imageData.width * imageData.height).toLocaleString()}</span></div>
-                <div className="flex justify-between"><span>WARNA:</span><span>RGBA (8-bit)</span></div>
+                <div className="flex justify-between gap-4 border-b-2 border-black/20 pb-1"><span className="shrink-0 text-black/60">WAKTU RENDER:</span><span className="text-right break-all">{renderTime.toFixed(2)}ms</span></div>
+                <div className="flex justify-between gap-4 border-b-2 border-black/20 pb-1"><span className="shrink-0 text-black/60">RESOLUSI:</span><span className="text-right break-all">{currentBaseImage.width}x{currentBaseImage.height}</span></div>
+                <div className="flex justify-between gap-4 border-b-2 border-black/20 pb-1"><span className="shrink-0 text-black/60">RASIO:</span><span className="text-right break-all">{(currentBaseImage.width/currentBaseImage.height).toFixed(2)}:1</span></div>
+                <div className="flex justify-between gap-4 border-b-2 border-black/20 pb-1"><span className="shrink-0 text-black/60">TOTAL PIKSEL:</span><span className="text-right break-all">{(currentBaseImage.width * currentBaseImage.height).toLocaleString()}</span></div>
+                {histogram?.stats && (
+                  <>
+                    <div className="flex justify-between gap-4 border-b-2 border-black/20 pb-1"><span className="shrink-0 text-black/60">LUMINANSI (AVG):</span><span className="text-right break-all">{histogram.stats.meanLuminance.toFixed(1)}</span></div>
+                    <div className="flex justify-between gap-4 border-b-2 border-black/20 pb-1"><span className="shrink-0 text-black/60">KONTRAS (STD. DEV):</span><span className="text-right break-all">{histogram.stats.contrast.toFixed(1)}</span></div>
+                    <div className="flex justify-between gap-4 border-b-2 border-black/20 pb-1"><span className="shrink-0 text-black/60">RGB RATA-RATA:</span><span className="text-right break-all">{Math.round(histogram.stats.avgR)}, {Math.round(histogram.stats.avgG)}, {Math.round(histogram.stats.avgB)}</span></div>
+                  </>
+                )}
+                <div className="flex justify-between gap-4"><span className="shrink-0 text-black/60">WARNA:</span><span className="text-right break-all">RGBA (8-bit)</span></div>
               </div>
             </div>
           )}
