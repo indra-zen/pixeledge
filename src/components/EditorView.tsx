@@ -1,7 +1,7 @@
 import React, { useEffect, useRef, useState, useCallback } from 'react';
 import { WebGLFilterEngine } from '../lib/webgl';
 import { FilterSettings, CustomFilter } from '../types';
-import { Download, Save, Share2, ChevronLeft, Image as ImageIcon, SlidersHorizontal, Activity, X, Trash2, BarChart2 } from 'lucide-react';
+import { Download, Save, Share2, ChevronLeft, Image as ImageIcon, SlidersHorizontal, Activity, X, Trash2, BarChart2, Undo, Redo, Sun, Contrast, Droplet, Palette, Thermometer, Focus, Droplets, Aperture, Sparkles } from 'lucide-react';
 import { db } from '../lib/db';
 import { calculateHistogram } from '../lib/imageUtils';
 import { HistogramPanel, HistogramData } from './HistogramPanel';
@@ -52,6 +52,10 @@ const isSettingsEqual = (a: FilterSettings, b: FilterSettings) => {
 export function EditorView({ imageData, onBack }: EditorViewProps) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const engineRef = useRef<WebGLFilterEngine | null>(null);
+  const [settingsHistory, setSettingsHistory] = useState<FilterSettings[]>([BUILT_IN_FILTERS[0].settings]);
+  const [historyIndex, setHistoryIndex] = useState(0);
+  const isUndoRedoRef = useRef(false);
+  
   const [settings, setSettings] = useState<FilterSettings>(BUILT_IN_FILTERS[0].settings);
   const [activeDrawer, setActiveDrawer] = useState<DrawerType>('PRESETS');
   const [customFilters, setCustomFilters] = useState<CustomFilter[]>([]);
@@ -149,8 +153,44 @@ export function EditorView({ imageData, onBack }: EditorViewProps) {
     };
   }, [settings, isDesktop, activeDrawer]);
 
+  useEffect(() => {
+    if (isUndoRedoRef.current) {
+      isUndoRedoRef.current = false;
+      return;
+    }
+    const timeout = setTimeout(() => {
+      setSettingsHistory(prev => {
+        const history = prev.slice(0, historyIndex + 1);
+        if (JSON.stringify(history[history.length - 1]) !== JSON.stringify(settings)) {
+          setHistoryIndex(history.length);
+          return [...history, settings];
+        }
+        return prev;
+      });
+    }, 500);
+    return () => clearTimeout(timeout);
+  }, [settings, historyIndex]);
+
   const handleSliderChange = (key: keyof FilterSettings, value: number) => {
     setSettings(prev => ({ ...prev, [key]: value }));
+  };
+
+  const handleUndo = () => {
+    if (historyIndex > 0) {
+      isUndoRedoRef.current = true;
+      const newIndex = historyIndex - 1;
+      setHistoryIndex(newIndex);
+      setSettings(settingsHistory[newIndex]);
+    }
+  };
+
+  const handleRedo = () => {
+    if (historyIndex < settingsHistory.length - 1) {
+      isUndoRedoRef.current = true;
+      const newIndex = historyIndex + 1;
+      setHistoryIndex(newIndex);
+      setSettings(settingsHistory[newIndex]);
+    }
   };
 
   const handleSaveDraft = async () => {
@@ -256,17 +296,23 @@ export function EditorView({ imageData, onBack }: EditorViewProps) {
         <section id={isDesktop ? "tour-pipeline" : undefined} className="hidden lg:flex lg:col-span-4 lg:row-span-4 bg-white border-[4px] border-black p-4 shadow-[8px_8px_0px_0px_rgba(0,0,0,1)] flex-col shrink-0">
           <h2 className="font-black text-xl mb-4 border-b-2 border-black pb-2 uppercase">Pengaturan</h2>
           <div className="space-y-6 flex-1 overflow-y-auto pr-2 pb-12 no-scrollbar">
-            <Slider label="KECERAHAN" value={settings.brightness} defaultValue={0} min={-1} max={1} step={0.01} onChange={(v) => handleSliderChange('brightness', v)} />
-            <Slider label="KONTRAS" value={settings.contrast} defaultValue={1} min={0} max={3} step={0.01} onChange={(v) => handleSliderChange('contrast', v)} />
-            <Slider label="SATURASI" value={settings.saturation} defaultValue={1} min={0} max={3} step={0.01} onChange={(v) => handleSliderChange('saturation', v)} />
-            <Slider label="WARNA (HUE)" value={settings.hue} defaultValue={0} min={-1} max={1} step={0.01} onChange={(v) => handleSliderChange('hue', v)} />
-            <Slider label="SUHU" value={settings.temperature || 0} defaultValue={0} min={-1} max={1} step={0.01} onChange={(v) => handleSliderChange('temperature', v)} />
-            <Slider label="KETAJAMAN" value={settings.sharpness} defaultValue={0} min={-1} max={5} step={0.1} onChange={(v) => handleSliderChange('sharpness', v)} />
-            <Slider label="BLUR" value={settings.blur || 0} defaultValue={0} min={0} max={1} step={0.01} onChange={(v) => handleSliderChange('blur', v)} />
-            <Slider label="VIGNETTE" value={settings.vignette || 0} defaultValue={0} min={0} max={1} step={0.01} onChange={(v) => handleSliderChange('vignette', v)} />
-            <Slider label="GRAIN" value={settings.grain || 0} defaultValue={0} min={0} max={1} step={0.01} onChange={(v) => handleSliderChange('grain', v)} />
+            <Slider icon={Sun} label="KECERAHAN" value={settings.brightness} defaultValue={0} min={-1} max={1} step={0.01} onChange={(v) => handleSliderChange('brightness', v)} />
+            <Slider icon={Contrast} label="KONTRAS" value={settings.contrast} defaultValue={1} min={0} max={3} step={0.01} onChange={(v) => handleSliderChange('contrast', v)} />
+            <Slider icon={Droplet} label="SATURASI" value={settings.saturation} defaultValue={1} min={0} max={3} step={0.01} onChange={(v) => handleSliderChange('saturation', v)} />
+            <Slider icon={Palette} label="WARNA (HUE)" value={settings.hue} defaultValue={0} min={-1} max={1} step={0.01} onChange={(v) => handleSliderChange('hue', v)} />
+            <Slider icon={Thermometer} label="SUHU" value={settings.temperature || 0} defaultValue={0} min={-1} max={1} step={0.01} onChange={(v) => handleSliderChange('temperature', v)} />
+            <Slider icon={Focus} label="KETAJAMAN" value={settings.sharpness} defaultValue={0} min={-1} max={5} step={0.1} onChange={(v) => handleSliderChange('sharpness', v)} />
+            <Slider icon={Droplets} label="BLUR" value={settings.blur || 0} defaultValue={0} min={0} max={1} step={0.01} onChange={(v) => handleSliderChange('blur', v)} />
+            <Slider icon={Aperture} label="VIGNETTE" value={settings.vignette || 0} defaultValue={0} min={0} max={1} step={0.01} onChange={(v) => handleSliderChange('vignette', v)} />
+            <Slider icon={Sparkles} label="GRAIN" value={settings.grain || 0} defaultValue={0} min={0} max={1} step={0.01} onChange={(v) => handleSliderChange('grain', v)} />
           </div>
-          <button onClick={() => setSaveModalOpen(true)} className="mt-4 w-full bg-black text-white py-3 font-bold hover:bg-zinc-800 transition-colors uppercase border-2 border-transparent hover:border-black active:translate-y-[2px] shrink-0">SIMPAN JADI FILTER BARU</button>
+          <div className="mt-4 flex flex-col gap-2 shrink-0">
+            <div className="flex gap-2">
+              <button onClick={handleUndo} disabled={historyIndex <= 0} className="flex-1 bg-yellow-400 text-black border-2 border-black py-2 font-bold hover:bg-yellow-500 transition-colors uppercase shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] active:translate-y-[1px] active:translate-x-[1px] active:shadow-none disabled:opacity-50 disabled:pointer-events-none cursor-pointer disabled:cursor-not-allowed flex items-center justify-center gap-1.5"><Undo size={16} />UNDO</button>
+              <button onClick={handleRedo} disabled={historyIndex >= settingsHistory.length - 1} className="flex-1 bg-yellow-400 text-black border-2 border-black py-2 font-bold hover:bg-yellow-500 transition-colors uppercase shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] active:translate-y-[1px] active:translate-x-[1px] active:shadow-none disabled:opacity-50 disabled:pointer-events-none cursor-pointer disabled:cursor-not-allowed flex items-center justify-center gap-1.5"><Redo size={16} />REDO</button>
+            </div>
+            <button onClick={() => setSaveModalOpen(true)} className="w-full bg-black text-white py-3 font-bold hover:bg-zinc-800 transition-colors uppercase border-2 border-transparent hover:border-black active:translate-y-[2px] shrink-0 flex items-center justify-center gap-2"><Save size={18} />SIMPAN JADI FILTER BARU</button>
+          </div>
         </section>
 
         {/* Desktop: Stats */}
@@ -401,16 +447,22 @@ export function EditorView({ imageData, onBack }: EditorViewProps) {
 
           {activeDrawer === 'ADJUST' && (
             <div className="flex flex-col gap-5 pb-24 max-w-xl mx-auto">
-              <Slider label="KECERAHAN" value={settings.brightness} defaultValue={0} min={-1} max={1} step={0.01} onChange={(v) => handleSliderChange('brightness', v)} />
-              <Slider label="KONTRAS" value={settings.contrast} defaultValue={1} min={0} max={3} step={0.01} onChange={(v) => handleSliderChange('contrast', v)} />
-              <Slider label="SATURASI" value={settings.saturation} defaultValue={1} min={0} max={3} step={0.01} onChange={(v) => handleSliderChange('saturation', v)} />
-              <Slider label="WARNA (HUE)" value={settings.hue} defaultValue={0} min={-1} max={1} step={0.01} onChange={(v) => handleSliderChange('hue', v)} />
-              <Slider label="SUHU" value={settings.temperature || 0} defaultValue={0} min={-1} max={1} step={0.01} onChange={(v) => handleSliderChange('temperature', v)} />
-              <Slider label="KETAJAMAN" value={settings.sharpness} defaultValue={0} min={-1} max={5} step={0.1} onChange={(v) => handleSliderChange('sharpness', v)} />
-              <Slider label="BLUR" value={settings.blur || 0} defaultValue={0} min={0} max={1} step={0.01} onChange={(v) => handleSliderChange('blur', v)} />
-              <Slider label="VIGNETTE" value={settings.vignette || 0} defaultValue={0} min={0} max={1} step={0.01} onChange={(v) => handleSliderChange('vignette', v)} />
-              <Slider label="GRAIN" value={settings.grain || 0} defaultValue={0} min={0} max={1} step={0.01} onChange={(v) => handleSliderChange('grain', v)} />
-              <button onClick={() => setSaveModalOpen(true)} className="mt-4 w-full bg-black text-white py-3 font-black shadow-[4px_4px_0px_0px_rgba(255,230,0,1)] hover:bg-zinc-800 transition-colors uppercase text-sm border-2 border-black hover:border-black active:translate-y-[2px] shrink-0">SIMPAN JADI FILTER BARU</button>
+              <Slider icon={Sun} label="KECERAHAN" value={settings.brightness} defaultValue={0} min={-1} max={1} step={0.01} onChange={(v) => handleSliderChange('brightness', v)} />
+              <Slider icon={Contrast} label="KONTRAS" value={settings.contrast} defaultValue={1} min={0} max={3} step={0.01} onChange={(v) => handleSliderChange('contrast', v)} />
+              <Slider icon={Droplet} label="SATURASI" value={settings.saturation} defaultValue={1} min={0} max={3} step={0.01} onChange={(v) => handleSliderChange('saturation', v)} />
+              <Slider icon={Palette} label="WARNA (HUE)" value={settings.hue} defaultValue={0} min={-1} max={1} step={0.01} onChange={(v) => handleSliderChange('hue', v)} />
+              <Slider icon={Thermometer} label="SUHU" value={settings.temperature || 0} defaultValue={0} min={-1} max={1} step={0.01} onChange={(v) => handleSliderChange('temperature', v)} />
+              <Slider icon={Focus} label="KETAJAMAN" value={settings.sharpness} defaultValue={0} min={-1} max={5} step={0.1} onChange={(v) => handleSliderChange('sharpness', v)} />
+              <Slider icon={Droplets} label="BLUR" value={settings.blur || 0} defaultValue={0} min={0} max={1} step={0.01} onChange={(v) => handleSliderChange('blur', v)} />
+              <Slider icon={Aperture} label="VIGNETTE" value={settings.vignette || 0} defaultValue={0} min={0} max={1} step={0.01} onChange={(v) => handleSliderChange('vignette', v)} />
+              <Slider icon={Sparkles} label="GRAIN" value={settings.grain || 0} defaultValue={0} min={0} max={1} step={0.01} onChange={(v) => handleSliderChange('grain', v)} />
+              <div className="mt-4 flex flex-col gap-2 shrink-0">
+                <div className="flex gap-2">
+                  <button onClick={handleUndo} disabled={historyIndex <= 0} className="flex-1 bg-yellow-400 text-black border-2 border-black py-3 font-black shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] hover:bg-yellow-500 transition-colors uppercase text-sm active:translate-y-[2px] active:translate-x-[2px] active:shadow-none disabled:opacity-50 disabled:pointer-events-none cursor-pointer disabled:cursor-not-allowed flex items-center justify-center gap-1.5"><Undo size={16} />UNDO</button>
+                  <button onClick={handleRedo} disabled={historyIndex >= settingsHistory.length - 1} className="flex-1 bg-yellow-400 text-black border-2 border-black py-3 font-black shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] hover:bg-yellow-500 transition-colors uppercase text-sm active:translate-y-[2px] active:translate-x-[2px] active:shadow-none disabled:opacity-50 disabled:pointer-events-none cursor-pointer disabled:cursor-not-allowed flex items-center justify-center gap-1.5"><Redo size={16} />REDO</button>
+                </div>
+                <button onClick={() => setSaveModalOpen(true)} className="w-full bg-black text-white py-3 font-black shadow-[4px_4px_0px_0px_rgba(255,230,0,1)] hover:bg-zinc-800 transition-colors uppercase text-sm border-2 border-black hover:border-black active:translate-y-[2px] shrink-0 flex items-center justify-center gap-2"><Save size={18} />SIMPAN JADI FILTER BARU</button>
+              </div>
             </div>
           )}
 
@@ -495,13 +547,14 @@ export function EditorView({ imageData, onBack }: EditorViewProps) {
   );
 }
 
-function Slider({ label, value, min, max, step, defaultValue, onChange }: { label: string, value: number, min: number, max: number, step: number, defaultValue: number, onChange: (v: number) => void }) {
+function Slider({ label, icon: Icon, value, min, max, step, defaultValue, onChange }: { label: string, icon?: React.ElementType, value: number, min: number, max: number, step: number, defaultValue: number, onChange: (v: number) => void }) {
   const isModified = Math.abs(value - defaultValue) > 0.001;
 
   return (
     <div className="flex flex-col gap-2">
       <div className="flex justify-between items-center font-black text-xs sm:text-sm uppercase">
         <span className="flex items-center gap-2">
+          {Icon && <Icon size={16} />}
           {label}
           {isModified && (
             <button 
