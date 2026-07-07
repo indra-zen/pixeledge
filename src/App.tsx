@@ -156,7 +156,7 @@ export default function App() {
   };
 
   return (
-    <div className="w-full h-screen bg-[#FFE600] overflow-hidden font-mono select-none text-black">
+    <div className="w-full h-[100dvh] bg-[#FFE600] overflow-hidden font-mono select-none text-black">
       {currentView === 'CAMERA' && (
         <CameraView onCapture={handleCapture} onSelectDraft={handleSelectDraft} />
       )}
