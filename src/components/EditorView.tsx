@@ -395,6 +395,7 @@ export function EditorView({ imageData, onBack }: EditorViewProps) {
               <div className="absolute top-[calc(100%+8px)] right-0 w-40 sm:w-48 bg-white border-[4px] border-black shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] flex flex-col z-50">
                 <button onClick={() => handleDownload('png')} className="px-4 py-2 sm:py-3 font-black hover:bg-green-200 border-b-[4px] border-black text-left uppercase text-sm">Simpan PNG</button>
                 <button onClick={() => handleDownload('jpeg')} className="px-4 py-2 sm:py-3 font-black hover:bg-green-200 border-b-[4px] border-black text-left uppercase text-sm">Simpan JPG</button>
+                <button onClick={() => handleDownload('webp')} className="px-4 py-2 sm:py-3 font-black hover:bg-green-200 border-b-[4px] border-black text-left uppercase text-sm">Simpan WEBP</button>
                 <button onClick={handleShare} className="px-4 py-2 sm:py-3 font-black hover:bg-pink-200 text-left uppercase text-sm flex items-center justify-between">Bagikan <Share2 size={16}/></button>
               </div>
             )}

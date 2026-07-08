@@ -223,10 +223,10 @@ export default function App() {
       {showTutorial && <InteractiveTour onClose={() => setShowTutorial(false)} />}
 
       {/* Floating Help Button */}
-      {!showTutorial && currentView !== 'PROCESSING' && (
+      {!showTutorial && currentView === 'EDITOR' && (
         <button 
-          onClick={currentView === 'CAMERA' ? startDemoTour : () => setShowTutorial(true)}
-          className={`fixed right-4 z-40 p-3 bg-cyan-400 border-[4px] border-black shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] hover:translate-x-[2px] hover:translate-y-[2px] hover:shadow-none transition-all rounded-full flex items-center justify-center active:bg-cyan-500 group ${currentView === 'EDITOR' ? 'bottom-24 lg:bottom-4' : 'bottom-4'}`}
+          onClick={() => setShowTutorial(true)}
+          className={`fixed right-4 z-10 p-3 bg-cyan-400 border-[4px] border-black shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] hover:translate-x-[2px] hover:translate-y-[2px] hover:shadow-none transition-all rounded-full flex items-center justify-center active:bg-cyan-500 group bottom-24 lg:bottom-4`}
         >
           <HelpCircle size={28} className="text-black group-hover:scale-110 transition-transform" />
         </button>
