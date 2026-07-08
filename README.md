@@ -24,8 +24,8 @@ Aplikasi ini menggunakan pendekatan arsitektur *100% Client-Side* (sepenuhnya be
    Penghitungan histogram (merah, hijau, biru) dan beberapa modifikasi gambar tingkat lanjut diproses menggunakan *Library* Computer Vision nomor 1 di dunia (OpenCV) yang dikompilasi (di- *compile*) ke dalam format WebAssembly agar bisa berjalan di browser dengan kecepatan menyerupai bahasa C++.
 2. **Web Workers (Multithreading):**
    Memodifikasi piksel gambar beresolusi tinggi memakan banyak memori dan CPU. Agar antarmuka (UI) tidak berhenti sesaat (*lag* / *freeze*), tugas berat pemrosesan gambar dilempar ke *background thread* melalui Web Workers.
-3. **HTML5 Canvas API:**
-   Setiap geseran *slider* efek warna langsung diaplikasikan ke elemen `<canvas>`, memastikan manipulasi gambar yang responsif hingga 60 FPS (Frame per Detik).
+3. **HTML5 Canvas API & WebGL:**
+   Setiap geseran *slider* efek warna langsung diaplikasikan ke elemen `<canvas>`. Pemanfaatan teknologi WebGL untuk akselerasi perangkat keras (Hardware Acceleration) pada tingkat GPU memastikan manipulasi visual super responsif, bahkan mempertahankan render stabil hingga 60 FPS (Frame per Detik).
 4. **Penyimpanan IndexedDB Native:**
    Menyimpan gambar berukuran besar langsung ke basis data lokal milik browser (menggunakan API native `indexedDB`), memungkinkan penyimpanan draf saat luring (*offline*).
 
@@ -45,8 +45,8 @@ Pastikan kamu sudah menginstal perangkat lunak berikut di komputermu:
 ### 2. Mengunduh Kode (Clone Repository)
 Buka Terminal / Command Prompt, lalu jalankan perintah ini untuk mengunduh kode aplikasi ke komputermu:
 ```bash
-git clone <URL_REPOSITORY_INI>
-cd <NAMA_FOLDER_REPOSITORY>
+git clone https://github.com/indra-zen/pixeledge.git
+cd pixeledge
 ```
 
 ### 3. Menginstal Dependensi (Modul)
@@ -84,4 +84,9 @@ Aplikasi akan mensimulasikan lingkungan seolah-olah sudah diterbitkan (*deployed
 
 ---
 
-*Dibuat dengan ❤️ untuk proyek kelas pengembangan web tingkat lanjut.*
+*Built on Google AI Studio - with Gemini Pro Latest*
+
+
+
+
+
