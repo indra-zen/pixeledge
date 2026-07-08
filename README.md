@@ -16,7 +16,7 @@ PixelEdge adalah Progressive Web App (PWA) pengedit foto yang interaktif, mengus
 
 ---
 
-## 🏗️ Arsitektur & Detail Teknis (Untuk Pembahasan Teknis)
+## 🏗️ Arsitektur & Detail Teknis
 
 Aplikasi ini menggunakan pendekatan arsitektur *100% Client-Side* (sepenuhnya berjalan di peramban/browser pengguna) tanpa adanya pemrosesan dari server eksternal (`Backend-less`). Berikut adalah beberapa teknologi inti yang dipakai:
 
@@ -31,7 +31,7 @@ Aplikasi ini menggunakan pendekatan arsitektur *100% Client-Side* (sepenuhnya be
 
 ---
 
-## 🧩 Cuplikan Kode (Code Snippets)
+## 🧩 Code Snippets
 
 Bagi kamu yang penasaran bagaimana beberapa fitur utama bekerja di balik layar, berikut adalah cuplikan kode penting di dalam aplikasi ini:
 
@@ -167,7 +167,7 @@ const contrast = Math.sqrt(variance); // Nilai akhir rasio kontras
 
 ---
 
-## 💻 Panduan Menjalankan Secara Lokal (Untuk Pemula)
+## 💻 Panduan Menjalankan Secara Lokal
 
 Jika kamu ingin menjalankan atau memodifikasi kode sumber (source code) aplikasi ini di komputermu sendiri, ikuti langkah-langkah detail berikut:
 
